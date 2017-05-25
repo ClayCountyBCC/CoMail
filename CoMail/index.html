@@ -1,0 +1,35 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Clay County Commissioner Email</title>
+  <link href="Content/bootstrap-theme.min.css" rel="stylesheet" />
+  <link href="Content/bootstrap.min.css" rel="stylesheet" />
+  <link href="Content/main.css" rel="stylesheet" />
+</head>
+<body class="container">
+  <nav id="navTopMenu"
+       class="navbar navbar-default container">
+    <div class="navbar-header">
+      <span class="navbar-brand">
+        Clay County Mail Test
+      </span>
+    </div>
+    <ul></ul>
+  </nav>
+  <div class="container"
+       id="ListMail">
+
+  </div>
+
+  <script src="Scripts/XHR.js"></script>
+  <script src="Scripts/Email.js"></script>
+  <script src="Scripts/app.js"></script>
+  <script>
+      document.addEventListener("DOMContentLoaded", function (event)
+      {
+        CoMail.Start();
+      });
+  </script>
+</body>
+</html>
