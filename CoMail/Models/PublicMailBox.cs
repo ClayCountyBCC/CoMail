@@ -12,6 +12,7 @@ namespace CoMail.Models
     public string Title { get; set; }
     public string Name { get; set; }
     public int Active { get; set; }
+    public string MailboxName { get; set; }
 
 
     public PublicMailBox(int Id, string Title, string Name, int Active)
@@ -37,6 +38,7 @@ namespace CoMail.Models
           THEN 'Former ' + title
           ELSE title END Title,
           name Name,
+          mailboxName MailboxName,
           active Active
         FROM person;";
       try

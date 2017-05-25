@@ -114,8 +114,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\WebApiConfig.cs" />
+    <Compile Include="Controllers\EmailController.cs" />
     <Compile Include="Controllers\MailBoxesController.cs" />
-    <Compile Include="Controllers\MailController.cs" />
+    <Compile Include="Controllers\EmailListController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>

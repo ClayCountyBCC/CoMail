@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
+using Dapper;
 
 namespace CoMail.Models
 {
@@ -41,10 +42,28 @@ namespace CoMail.Models
 
     }
 
-    public static List<Email> GetBasic()
+    public static List<Email> Get(int personId, int page = 0)
     {
-      string query = @"";
-
+      var dp = new DynamicParameters();
+      dp.Add("@PersonId", personId);
+      dp.Add("@Page", (int)(page * 20));
+      string query = @"
+        SELECT 
+          fromAddress,
+          toAddress,
+          ccAddress,
+          originalArcId,
+          dateReceived,
+          dateSent,
+          subject,
+          body,
+          attachmentCount
+        FROM email E
+        INNER JOIN emailMailboxLookup EML ON E.id = EML.emailId
+        INNER JOIN person P ON P.id = EML.personId
+        WHERE P.id = @PersonId
+        ORDER BY E.dateReceived DESC
+        OFFSET @Page ROWS FETCH NEXT 20 ROWS ONLY;";
       try
       {
         return Constants.Get_Data<Email>(query, Constants.csMain);

@@ -9,10 +9,11 @@ using System.Runtime.Caching;
 
 namespace CoMail.Controllers
 {
-  public class MailController : ApiController
+  public class EmailListController : ApiController
   {
-    // GET: api/Mail
-    public IHttpActionResult Get()
+    // This query should return everything except the body of the email
+    // but we should test it first to see if 20x email + body isn't bad to download, if so, that will save a query to the server.
+    public IHttpActionResult Get(string Name, int Page = 0) // this needs to be modified to require a mailbox name and allow for a page number.
     {
       var CIP = new CacheItemPolicy()
       {
