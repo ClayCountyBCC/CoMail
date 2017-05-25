@@ -8,6 +8,7 @@ namespace CoMail.Models
 {
   public class Attachment
   {
+    // all I want to emit to the client is the Filename and URL
     public string Filename { get; set; }
     private long MailId { get; set; }
     private int Size { get; set; }

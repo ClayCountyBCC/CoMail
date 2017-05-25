@@ -76,10 +76,14 @@ namespace CoMail.Models
 
     private static object InitItem(string key)
     {
-      switch (key.Trim().ToLower())
+      string[] k = key.Trim().ToLower().Split(',');
+      switch (k[0])
       {
         case "email":
-          return Email.GetBasic();
+          int personId = int.Parse(k[1]);
+          int page = int.Parse(k[2]);
+          return Email.Get(personId, page);
+
         case "mailboxes":
           return PublicMailBox.Get();
         default:
