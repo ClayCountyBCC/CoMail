@@ -16,11 +16,19 @@ namespace CoMail.Models
     public string CC { get; set; }
     public string To { get; set; }
     public DateTime DateReceived { get; set; } // DatesTimes from GFI are in UTC
+    public DateTime DateSent { get; set; }
     public string DateReceived_ToString
     {
       get
       {
         return DateReceived.ToString();
+      }
+    }
+    public string DateSent_ToString
+    {
+      get
+      {
+        return DateSent.ToString();
       }
     }
     public string Body { get; set; }
@@ -42,31 +50,49 @@ namespace CoMail.Models
 
     }
 
-    public static List<Email> Get(int personId, int page = 0)
+    public static List<Email> Get(
+      int personId, 
+      int page = 0, 
+      string subject = "", 
+      string from = "")
     {
+      string sub = "";
+      string frm = "";
       var dp = new DynamicParameters();
       dp.Add("@PersonId", personId);
       dp.Add("@Page", (int)(page * 20));
-      string query = @"
+      if (subject.Length > 0)
+      {
+        dp.Add("@Subject", subject);
+        sub = " AND subject LIKE '%' + @Subject + '%' ";
+      }
+      if (from.Length > 0)
+      {
+        dp.Add("@From", from);
+        frm = " AND fromAddress LIKE '%' + @From + '%' ";
+      }
+      string query = $@"
         SELECT 
-          fromAddress,
-          toAddress,
-          ccAddress,
-          originalArcId,
-          dateReceived,
-          dateSent,
-          subject,
-          body,
-          attachmentCount
+          fromAddress 'From',
+          toAddress 'To',
+          ccAddress CC,
+          originalArcId OriginalId,
+          dateReceived DateReceived,
+          dateSent DateSent,
+          subject Subject,
+          body Body,
+          attachmentCount AttachmentCount
         FROM email E
         INNER JOIN emailMailboxLookup EML ON E.id = EML.emailId
         INNER JOIN person P ON P.id = EML.personId
         WHERE P.id = @PersonId
+          { sub }
+          { frm }
         ORDER BY E.dateReceived DESC
         OFFSET @Page ROWS FETCH NEXT 20 ROWS ONLY;";
       try
       {
-        return Constants.Get_Data<Email>(query, Constants.csMain);
+        return Constants.Get_Data<Email>(query, dp, Constants.csMain);
       }
       catch(Exception ex)
       {

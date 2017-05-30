@@ -1,35 +1,71 @@
 ﻿<!DOCTYPE html>
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang='en-US'>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <title>Clay County Commissioner Email</title>
+  <title>Email Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link type="text/css" rel="stylesheet" xmlns="http://www.w3.org/1999/xhtml" />
+  <meta name="description" content="View email sent and received by Officials in Clay County, Florida." />
   <link href="Content/bootstrap.min.css" rel="stylesheet" />
+  <link href="Content/bootstrap-grid.min.css" rel="stylesheet" />
   <link href="Content/main.css" rel="stylesheet" />
+
 </head>
-<body class="container">
-  <nav id="navTopMenu"
-       class="navbar navbar-default container">
-    <div class="navbar-header">
-      <span class="navbar-brand">
-        Clay County Public Email
-      </span>
+<body>
+  <nav class="navbar navbar-light bg-faded fixed-top">
+    <div class="d-inline-flex container justify-content-between">
+      <a class="navbar-brand " href="#">Clay County Public Email</a>
+      <div class="navbar">
+        <ul class="navbar-nav text-center ">
+          <li class="nav-item active">
+            <a class="nav-link" href="#">Home</a>
+          </li>
+        </ul>
+      </div>
     </div>
-    <ul></ul>
   </nav>
-  <div class="container"
-       id="ListMail">
+
+  <div class="main-container">
+
+    <section id="MailboxList"
+             class="content-wrapper">
+      <h2>County Commissioners</h2>
+      <ul id="Commissioners"
+          class="round">
+      </ul>
+      <h2>Former Commissioners</h2>
+      <ul id="FormerCommissioners"
+          class="round">
+      </ul>
+      <h2>Other Public Mailboxes</h2>
+      <ul id="OtherPublic"
+          class="round">
+      </ul>
+      <br>
+    </section>
+
 
   </div>
 
+  <script>
+    document.addEventListener("DOMContentLoaded", function (event)
+    {
+      CoMail.Start();
+      
+    });
+  </script>
+  <script src="Scripts/jquery-3.1.1.min.js"></script>
+  <script src="Scripts/jquery-ui-1.12.1.min.js"></script>
+  <script src="Scripts/LocationHash.js"></script>
+  <script src="Scripts/PublicMailBox.js"></script>
+  <script src="Scripts/es6-promise.min.js"></script>
   <script src="Scripts/XHR.js"></script>
   <script src="Scripts/Email.js"></script>
   <script src="Scripts/app.js"></script>
-  <script>
-      document.addEventListener("DOMContentLoaded", function (event)
-      {
-        CoMail.Start();
-      });
-  </script>
+  <script src="Scripts/jquery-3.1.1.js"></script>
+  <script src="Scripts/jquery-ui-1.12.1.js"></script>
+  <script src="Scripts/bootstrap-datepicker.js"></script>
+
+
 </body>
+
 </html>

@@ -6,7 +6,9 @@ using System.Runtime.Caching;
 
 namespace CoMail.Models
 {
+#pragma warning disable IDE1006 // Naming Styles
   public class myCache
+#pragma warning restore IDE1006 // Naming Styles
   {
     private static MemoryCache _cache = new MemoryCache("myCache");
 

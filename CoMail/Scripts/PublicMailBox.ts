@@ -7,6 +7,8 @@ namespace CoMail
     EmailAddress: string;
     Title: string;
     Name: string;
+    Active: number;
+    MailboxName: string;
     Get(): Promise<Array<PublicMailBox>>;
   }
   export class PublicMailBox implements IPublicMailBox
@@ -14,6 +16,8 @@ namespace CoMail
     public EmailAddress: string;
     public Title: string;
     public Name: string;
+    public Active: number;
+    public MailboxName: string;
     Get(): Promise<Array<PublicMailBox>>
     {
       var x = XHR.Get("/API/MailBoxes");

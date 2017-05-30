@@ -1,2 +1,403 @@
-﻿body {
+﻿#MailboxList {
+  display: none;
+}
+#MailboxList ul {
+  margin-bottom: 2em;
+}
+
+html, body
+{
+  margin: 0;
+  padding: 0;
+  height: 93%;
+  width: 100%;
+  font-family: sans-serif;
+  outline-color: darkgray;
+  min-width: 320px;
+}
+
+::-webkit-scrollbar
+{
+  display: none;
+}
+
+.main-container
+{
+  height: 100%;
+  margin-top: 7rem;
+  min-width: 320px;
+}
+
+.select-email
+{
+  height: 100%;
+  background-color: deepskyblue;
+  padding-top: 15px;
+}
+
+.email-viewer
+{
+  height: 100%;
+  background-color: blueviolet;
+  padding-top: 15px;
+  color: white;
+}
+
+.datebox
+{
+  padding-left: 10px;
+  margin-left: 0;
+}
+
+#DateFromSelect,
+#DateToSelect,
+#DateSelectRow,
+#FromSenderSearchRow,
+#SenderSearch,
+#SubjectSearch,
+#SearchButton
+{
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+
+.myHeader
+{
+  background-color: lightgreen;
+  text-align: right;
+  margin-bottom: 0;
+  max-width: 100%;
+}
+
+.myHeight
+{
+  line-height: 3rem;
+}
+
+.topSection
+{
+  margin-bottom: 3rem;
+}
+
+.logo
+{
+  font-size: 3rem;
+}
+
+.navbar
+{
+  min-width: 320px;
+}
+
+  .navbar ul li a
+  {
+    line-height: 1rem;
+  }
+
+.GreyButton
+{
+  float: right;
+  font-size: 1.75rem;
+  font-weight: 600;
+  border: none;
+}
+
+.myButton
+{
+  transition: all;
+  transition-duration: .5s;
+  background-color: lightgray;
+}
+
+  .myButton:hover
+  {
+    background-color: rgb(120, 120, 120);
+    color: darkgray;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .myButton:focus
+  {
+    outline-color: darkgray;
+  }
+
+.datebox,
+.SearchSender,
+.SearchSubject
+{
+  margin-bottom: 1rem;
+  line-height: 3rem;
+  font-size: 18px;
+  text-align: left;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+.datelabel
+{
+  margin-bottom: 2rem;
+}
+
+input::-webkit-input-placeholder
+{ /* Chrome/Opera/Safari */
+  color: lightgray;
+  color: rgba(0, 0, 0, 0.2);
+}
+
+input::-moz-placeholder
+{ /* Firefox 19+ */
+  color: lightgray;
+  color: rgba(0, 0, 0, 0.2);
+}
+
+input:-ms-input-placeholder
+{ /* IE 10+ */
+  color: lightgray;
+  color: rgba(0, 0, 0, 0.2);
+}
+
+input:-moz-placeholder
+{ /* Firefox 18- */
+  background-color: lightgrey;
+  color: lightgrey;
+  color: rgba(0, 0, 0, 0.2);
+}
+
+input:focus
+{
+  outline: none;
+  box-shadow: none;
+}
+
+input:active
+{
+  outline: none;
+  box-shadow: none;
+}
+
+.myDivider
+{
+  margin: 20px auto;
+  width: 100%;
+  height: 1px;
+  background: rgb(255,255,255); /* Old browsers */
+  background: -moz-linear-gradient(left, rgba(255,255,255,1) 0%, rgba(0,0,0,1) 50%, rgba(255,255,255,1) 100%); /* FF3.6-15 */
+  background: -webkit-linear-gradient(left, rgba(255,255,255,1) 0%, rgba(0,0,0,1) 50%,rgba(255,255,255,1) 100%); /* Chrome10-25,Safari5.1-6 */
+  background: linear-gradient(to right, rgba(255,255,255,1) 0%, rgba(0,0,0,1) 50%,rgba(255,255,255,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#ffffff',GradientType=0 ); /* IE6-9 */
+}
+
+#DateSearch,
+#EmailSearch
+{
+  margin-bottom: 2rem;
+}
+
+#EmailListLabel
+{
+  margin-bottom: 1rem;
+}
+
+.SearchRow
+{
+  margin: 0 auto;
+}
+
+@media (max-width: 420px)
+{
+  .pull-right-lg
+  {
+    float: right;
+  }
+
+  .container
+  {
+    width: 98%;
+  }
+
+  h4
+  {
+    font-size: 90%;
+  }
+}
+
+@media (min-width: 421px)
+{
+  .select-email
+  {
+    height: auto;
+  }
+
+  .email-viewer
+  {
+    height: auto;
+  }
+  /* Align text to center. */
+  .text-xs-center
+  {
+    text-align: center;
+  }
+
+  .datebox,
+  .SearchSender,
+  .SearchSubject
+  {
+    margin: .5rem auto;
+    line-height: 1rem;
+  }
+
+  .container
+  {
+    width: 100%;
+  }
+
+  h4
+  {
+    font-size: 100%;
+  }
+}
+
+@media (min-width: 768px)
+{
+  .pull-right-md
+  {
+    float: right;
+  }
+
+  .container
+  {
+    width: 98%;
+  }
+
+  h4
+  {
+    font-size: 120%;
+  }
+}
+
+@media (min-width: 992px)
+{
+  .container
+  {
+    width: 98%;
+  }
+
+  h4
+  {
+    font-size: 120%;
+  }
+}
+
+@media (min-width: 1200px)
+{
+  .pull-right-lg
+  {
+    float: right;
+  }
+
+  .container
+  {
+    width: 1170px;
+  }
+}
+
+.DateTimeLabel
+{
+  margin: 0 auto;
+}
+
+input .input-group
+{
+  margin: 0;
+  padding: 0;
+}
+
+  input .input-group:focus
+  {
+    outline-color: darkgray;
+    box-shadow: darkgray;
+    border-color: darkgray;
+  }
+
+  input .input-group:active
+  {
+    outline-color: darkgray;
+    box-shadow: darkgray;
+    border-color: darkgray;
+  }
+
+.darkgray-Outline-Color:focus
+{
+  outline-color: darkgray;
+  border-color: darkgray;
+  box-shadow: darkgray;
+}
+
+.darkgray-Outline-Color:active
+{
+  outline-color: darkgray;
+  border-color: darkgray;
+  box-shadow: darkgray;
+}
+
+
+
+header .content-wrapper
+{
+  padding-top: 20px;
+}
+
+footer
+{
+  clear: both;
+  background-color: #d6d6d6;
+  font-size: .8rem;
+  height: 100px;
+}
+
+.callout
+{
+  border: 1px red solid;
+  background-color: bisque;
+}
+
+.content-wrapper
+{
+  margin: 0 auto;
+  max-width: 960px;
+}
+
+
+
+ul, menu, dir
+{
+  display: block;
+  list-style-type: disc;
+  -webkit-margin-before: 0;
+  -webkit-margin-after: 0;
+  -webkit-margin-start: 0px;
+  -webkit-margin-end: 0px;
+  -webkit-padding-start: 50px;
+}
+
+.ui-datepicker
+{
+  width: 240px;
+}
+
+.ui-widget
+{
+  width: 240px;
+}
+
+.ui-widget-content
+{
+  width: 240px;
+}
+
+#EmailTableHeader
+{
+  border: 2px black solid;
 }

@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<ArrayOfArrayOfArrayOfString xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <ArrayOfArrayOfString>
+    <ArrayOfString>
+      <string>c:\users\mccartneyd\documents\visual studio 2017\projects\comail\comail\index.html</string>
+    </ArrayOfString>
+    <ArrayOfString>
+      <string>c:\users\mccartneyd\documents\visual studio 2017\projects\comail\comail\controllers\emaillistcontroller.cs</string>
+    </ArrayOfString>
+    <ArrayOfString>
+      <string>c:\users\mccartneyd\documents\visual studio 2017\projects\comail\comail\controllers\mailboxescontroller.cs</string>
+    </ArrayOfString>
+    <ArrayOfString>
+      <string>c:\users\mccartneyd\documents\visual studio 2017\projects\comail\comail\controllers\emailcontroller.cs</string>
+    </ArrayOfString>
+    <ArrayOfString>
+      <string>c:\users\mccartneyd\documents\visual studio 2017\projects\comail\comail\models\email.cs</string>
+    </ArrayOfString>
+    <ArrayOfString>
+      <string>C:\Users\mccartneyd\Documents\Visual Studio 2017\Projects\CoMail\CoMail\Models\Constants.cs</string>
+    </ArrayOfString>
+    <ArrayOfString>
+      <string>c:\users\mccartneyd\documents\visual studio 2017\projects\comail\comail\models\errorlog.cs</string>
+    </ArrayOfString>
+    <ArrayOfString>
+      <string>c:\users\mccartneyd\documents\visual studio 2017\projects\comail\comail\models\publicmailbox.cs</string>
+    </ArrayOfString>
+    <ArrayOfString>
+      <string>c:\users\mccartneyd\documents\visual studio 2017\projects\comail\comail\models\mycache.cs</string>
+    </ArrayOfString>
+    <ArrayOfString>
+      <string>c:\users\mccartneyd\documents\visual studio 2017\projects\comail\comail\models\attachment.cs</string>
+    </ArrayOfString>
+    <ArrayOfString>
+      <string>c:\users\mccartneyd\documents\visual studio 2017\projects\comail\comail\app_start\webapiconfig.cs</string>
+    </ArrayOfString>
+    <ArrayOfString>
+      <string>c:\users\mccartneyd\documents\visual studio 2017\projects\comail\comail\connectionstrings.config</string>
+    </ArrayOfString>
+    <ArrayOfString>
+      <string>c:\users\mccartneyd\documents\visual studio 2017\projects\comail\comail\content\main.css</string>
+    </ArrayOfString>
+    <ArrayOfString>
+      <string>c:\users\mccartneyd\documents\visual studio 2017\projects\comail\comail\scripts\app.ts</string>
+    </ArrayOfString>
+    <ArrayOfString>
+      <string>c:\users\mccartneyd\documents\visual studio 2017\projects\comail\comail\scripts\email.ts</string>
+    </ArrayOfString>
+    <ArrayOfString>
+      <string>c:\users\mccartneyd\documents\visual studio 2017\projects\comail\comail\scripts\publicmailbox.ts</string>
+    </ArrayOfString>
+    <ArrayOfString>
+      <string>c:\users\mccartneyd\documents\visual studio 2017\projects\comail\comail\scripts\xhr.ts</string>
+    </ArrayOfString>
+    <ArrayOfString>
+      <string>c:\users\mccartneyd\documents\visual studio 2017\projects\comail\comail\scripts\tsconfig.json</string>
+    </ArrayOfString>
+  </ArrayOfArrayOfString>
+</ArrayOfArrayOfArrayOfString>

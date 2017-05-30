@@ -21,9 +21,14 @@ namespace CoMail
         );
       config.Routes.MapHttpRoute(
         name: "EmailListApi",
-        routeTemplate: "api/{controller}/{mailbox}/{page}",
-        defaults: new { page = RouteParameter.Optional }
-        );      
+        routeTemplate: "api/{controller}/{mailbox}/{page}/{subject}/{from}",
+        defaults: new
+        {
+          page = RouteParameter.Optional,
+          subject = RouteParameter.Optional,
+          from = RouteParameter.Optional
+        }
+        );
 
     }
   }
