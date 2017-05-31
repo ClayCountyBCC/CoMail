@@ -70,6 +70,24 @@ namespace CoMail.Models
       }
     }
 
+    public static int Exec_Scalar(string query, DynamicParameters dbA, string cs)
+    {
+      try
+      {
+        using (IDbConnection db =
+          new SqlConnection(
+            Get_ConnStr(cs)))
+        {
+          return db.ExecuteScalar<int>(query, dbA);
+        }
+      }
+      catch (Exception ex)
+      {
+        new ErrorLog(ex, query);
+        return -1;
+      }
+    }
+
     public static string Get_ConnStr(string cs)
     {
       return ConfigurationManager.ConnectionStrings[cs].ConnectionString;

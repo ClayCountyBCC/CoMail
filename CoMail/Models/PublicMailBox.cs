@@ -32,6 +32,13 @@ namespace CoMail.Models
     {
       string sql = @"
         USE PublicEmail;
+
+        WITH COUNT_CTE(personId, emailCount) AS (
+          SELECT personId, COUNT(*) AS CNT
+          FROM emailMailboxLookup
+          GROUP BY personId
+        )
+
         SELECT 
           id Id,
           CASE WHEN active = 0 
@@ -40,7 +47,9 @@ namespace CoMail.Models
           name Name,
           mailboxName MailboxName,
           active Active
-        FROM person;";
+        FROM person P
+        INNER JOIN COUNT_CTE C ON P.id = C.personId
+        ORDER BY title ASC, finalTermYear DESC;";
       try
       {
         return Constants.Get_Data<PublicMailBox>(sql, Constants.csMain);

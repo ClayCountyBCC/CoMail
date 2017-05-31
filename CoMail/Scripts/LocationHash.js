@@ -4,7 +4,7 @@ var CoMail;
      = (function () {
         function LocationHash(locationHash) {
             this.Mailbox = "";
-            this.Page = 0;
+            this.Page = 1;
             this.EmailId = -1;
             this.Subject = "";
             this.From = "";

@@ -4,16 +4,17 @@
 #MailboxList ul {
   margin-bottom: 2em;
 }
-
 html, body
 {
   margin: 0;
   padding: 0;
-  height: 93%;
+  /*height: 100%;*/
   width: 100%;
   font-family: sans-serif;
   outline-color: darkgray;
   min-width: 320px;
+  box-sizing: border-box;
+  background-color: lightgrey;
 }
 
 ::-webkit-scrollbar
@@ -23,9 +24,15 @@ html, body
 
 .main-container
 {
-  height: 100%;
-  margin-top: 7rem;
+  /*height: 100%;*/
   min-width: 320px;
+  padding-top: 5em;
+  background-color: aliceblue;
+}
+
+.NoPadding
+{
+  padding: 0;
 }
 
 .select-email
@@ -61,6 +68,14 @@ html, body
   margin-bottom: 1rem;
 }
 
+#EmailTableHeader h3
+{
+  margin-top: .5rem;
+  padding-left: .25em;
+  text-align: left;
+  -webkit-margin-before: .5em;
+  -webkit-margin-after: 0;
+}
 
 .myHeader
 {
@@ -179,8 +194,7 @@ input:active
 
 .myDivider
 {
-  margin: 20px auto;
-  width: 100%;
+  width: 98%;
   height: 1px;
   background: rgb(255,255,255); /* Old browsers */
   background: -moz-linear-gradient(left, rgba(255,255,255,1) 0%, rgba(0,0,0,1) 50%, rgba(255,255,255,1) 100%); /* FF3.6-15 */
@@ -212,19 +226,19 @@ input:active
     float: right;
   }
 
-  .container
+  h3
   {
-    width: 98%;
-  }
-
-  h4
-  {
-    font-size: 90%;
+    font-size: 1em;
   }
 }
 
 @media (min-width: 421px)
 {
+  .container
+  {
+    width: 100%;
+  }
+
   .select-email
   {
     height: auto;
@@ -248,19 +262,20 @@ input:active
     line-height: 1rem;
   }
 
-  .container
-  {
-    width: 100%;
-  }
 
-  h4
+  h3
   {
-    font-size: 100%;
+    font-size: 1em;
   }
 }
 
 @media (min-width: 768px)
 {
+  .container
+  {
+    width: 100%;
+  }
+
   .pull-right-md
   {
     float: right;
@@ -268,25 +283,25 @@ input:active
 
   .container
   {
-    width: 98%;
+    width: 95%;
   }
 
-  h4
+  h3
   {
-    font-size: 120%;
+    font-size: 1.25em;
   }
 }
 
-@media (min-width: 992px)
+@media (min-width: 992px )
 {
   .container
   {
-    width: 98%;
+    width: 70%;
   }
 
-  h4
+  h3
   {
-    font-size: 120%;
+    font-size: 1.5em;
   }
 }
 
@@ -295,11 +310,6 @@ input:active
   .pull-right-lg
   {
     float: right;
-  }
-
-  .container
-  {
-    width: 1170px;
   }
 }
 
@@ -399,5 +409,98 @@ ul, menu, dir
 
 #EmailTableHeader
 {
-  border: 2px black solid;
+  border-bottom: 1px black solid;
+  background-color: #b0e0e6;
+  padding: 0;
+}
+
+.page-link
+{
+  background-color: none;
+  padding: 0 .75rem;
+  line-height: 1.5rem;
+}
+
+.EmailDataRow
+{
+  border: 1px black solid;
+}
+
+.EmailDataCell
+{
+  padding-top: 5px;
+  padding-bottom: 5px;
+  margin-left: 0;
+}
+
+.EmailTableData
+{
+  display: table;
+}
+
+.EmailDataRow:nth-of-type(2n)
+{
+  background-color: peachpuff;
+  background-color: rgba(255, 165, 0, 0.4);
+}
+
+.MyInfoButton
+{
+  padding-top: 0;
+  padding-bottom: 0;
+  width: auto;
+}
+
+.bg-faded
+{
+  background-color: powderblue;
+}
+
+.pre-scrollable::-webkit-scrollbar
+{
+  display: normal;
+}
+
+/*.EmailDataCell:nth-of-type(2n)
+{
+}*/
+
+#CommissionerEmailTitle
+{
+  margin-bottom: 2em;
+}
+
+#LandingPageContent
+{
+  margin-bottom: 2rem;
+}
+
+.ModalMessage
+{
+  margin-left: 1em;
+  margin-right: -2em;
+  border: 1px lightgrey solid;
+  border-radius: 5px;
+  background-color: white
+}
+
+.modal-header,
+.modal-footer
+{
+  background-color: rgba(176, 224, 230, 0.62);
+}
+
+.modal-body
+{
+  background-color: rgba(246, 215, 153, 0.60);
+}
+
+hr.dotted
+{
+  border-top: 2px dotted rgba(150,150,150,.7);
+}
+
+.modal-title
+{
+  font-size: 2rem;
 }

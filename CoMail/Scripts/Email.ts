@@ -17,6 +17,7 @@ namespace CoMail
     AttachmentCount: number;
   
     Get(lh: LocationHash): Promise<Array<Email>>;
+    GetCount(lh: LocationHash): Promise<number>;
     CheckMailbox(MailboxName: string): boolean;
   
   }
@@ -48,13 +49,37 @@ namespace CoMail
       let arg = "";
       if (s.length > 0) arg = "?" + s;
       if (f.length > 0) arg = arg.length === 0 ? "?" + f : arg + "&" + f;
-      var x = XHR.Get("/API/EmailList/" + lh.Mailbox + "/" + lh.Page + "/" + arg);
+      var x = XHR.Get("/API/EmailList/" + lh.Mailbox + "/" + (lh.Page - 1) + "/" + arg);
       return new Promise<Array<Email>>(function (resolve, reject)
       {
         x.then(function (response)
         {
           let ar: Array<Email> = JSON.parse(response.Text);
           return resolve(ar);
+        }).catch(function ()
+        {
+          console.log("error in Get Email");
+          return reject(null);
+        });
+      });
+    }
+
+    public GetCount(lh: LocationHash): Promise<number>
+    {
+      if (!this.CheckMailbox(lh.Mailbox)) return;
+
+      let s = lh.Subject.length === 0 ? "" : "subject=" + lh.Subject;
+      let f = lh.From.length === 0 ? "" : "from=" + lh.From;
+      let arg = "";
+      if (s.length > 0) arg = "?" + s;
+      if (f.length > 0) arg = arg.length === 0 ? "?" + f : arg + "&" + f;
+      var x = XHR.Get("/API/EmailCount/" + lh.Mailbox + "/" + (lh.Page - 1) + "/" + arg);
+      return new Promise<number>(function (resolve, reject)
+      {
+        x.then(function (response)
+        {
+          let resp = JSON.parse(response.Text);
+          return resolve(resp);
         }).catch(function ()
         {
           console.log("error in Get Email");

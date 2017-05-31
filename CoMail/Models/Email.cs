@@ -103,5 +103,46 @@ namespace CoMail.Models
 
     }
 
+    public static int GetCount(
+      int personId,
+      string subject = "",
+      string from = "")
+    {
+      string sub = "";
+      string frm = "";
+      var dp = new DynamicParameters();
+      dp.Add("@PersonId", personId);
+      if (subject.Length > 0)
+      {
+        dp.Add("@Subject", subject);
+        sub = " AND subject LIKE '%' + @Subject + '%' ";
+      }
+      if (from.Length > 0)
+      {
+        dp.Add("@From", from);
+        frm = " AND fromAddress LIKE '%' + @From + '%' ";
+      }
+      string query = $@"
+        SELECT 
+          COUNT(*)
+        FROM email E
+        INNER JOIN emailMailboxLookup EML ON E.id = EML.emailId
+        INNER JOIN person P ON P.id = EML.personId
+        WHERE P.id = @PersonId
+          { sub }
+          { frm };";
+      try
+      {
+        return Constants.Exec_Scalar(query, dp, Constants.csMain);
+      }
+      catch (Exception ex)
+      {
+        new ErrorLog(ex, query);
+        return -1;
+      }
+
+
+    }
+
   }
 }

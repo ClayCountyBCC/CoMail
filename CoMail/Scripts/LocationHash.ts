@@ -13,7 +13,7 @@
   export class LocationHash// implements ILocationHash
   {
     public Mailbox: string = "";
-    public Page: number = 0;
+    public Page: number = 1;
     public EmailId: number = -1;
     public Subject: string = "";
     public From: string = "";
