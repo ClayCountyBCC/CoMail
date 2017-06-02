@@ -6,7 +6,7 @@ using System.Net.Http;
 using System.Web.Http;
 using CoMail.Models;
 using System.Runtime.Caching;
-
+using System.Threading;
 namespace CoMail.Controllers
 {
   public class EmailListController : ApiController
@@ -18,9 +18,10 @@ namespace CoMail.Controllers
       int page = 0,
       string subject = "",
       string from = ""
-      ) // this needs to be modified to require a mailbox name and allow for a page number.
+      ) 
     {
 
+      //Thread.Sleep(5000);
       var pl = (List<PublicMailBox>)myCache.GetItem(
         "mailboxes",
         new CacheItemPolicy() { AbsoluteExpiration = DateTime.Now.AddHours(16) });
@@ -56,7 +57,7 @@ namespace CoMail.Controllers
         {
           // If they include a subject or from, we want to do a raw query 
           // and return 
-          var e = Email.Get(pId, page, subject, from);
+          var e = Email.GetShort(pId, page, subject, from);
           if(e != null)
           {
             return Ok(e);

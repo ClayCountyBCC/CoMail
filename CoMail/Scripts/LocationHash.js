@@ -29,6 +29,35 @@ var CoMail;
                 }
             }
         }
+        LocationHash.prototype.AddEmailId = function (EmailId) {
+            // and using its current properties, going to emit an updated hash
+            // with a new EmailId.
+            var h = "";
+            if (this.Mailbox.length > 0)
+                h += "&mailbox=" + this.Mailbox;
+            if (this.Page > -1)
+                h += "&page=" + this.Page.toString();
+            if (this.Subject.length > 0)
+                h += "&subject=" + this.Subject;
+            if (this.From.length > 0)
+                h += "&from=" + this.From;
+            h += "&emailid=" + EmailId.toString();
+            return h.substring(1);
+        };
+        LocationHash.prototype.RemoveEmailId = function () {
+            // and using its current properties, going to emit an updated hash
+            // with a new EmailId.
+            var h = "";
+            if (this.Mailbox.length > 0)
+                h += "&mailbox=" + this.Mailbox;
+            if (this.Page > -1)
+                h += "&page=" + this.Page.toString();
+            if (this.Subject.length > 0)
+                h += "&subject=" + this.Subject;
+            if (this.From.length > 0)
+                h += "&from=" + this.From;
+            return h.substring(1);
+        };
         return LocationHash;
     }());
     CoMail.LocationHash = LocationHash;

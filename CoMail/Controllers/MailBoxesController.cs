@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Web.Http;
 using CoMail.Models;
 using System.Runtime.Caching;
+using System.Threading;
 
 namespace CoMail.Controllers
 {
@@ -18,6 +19,7 @@ namespace CoMail.Controllers
       {
         AbsoluteExpiration = DateTime.Now.AddHours(16)
       };
+      //Thread.Sleep(5000);
       var mailboxes = (List<PublicMailBox>)myCache.GetItem("mailboxes", CIP);
       if (mailboxes != null)
       {

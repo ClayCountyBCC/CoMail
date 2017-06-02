@@ -84,10 +84,15 @@ namespace CoMail.Models
         case "email":
           int personId = int.Parse(k[1]);
           int page = int.Parse(k[2]);
-          return Email.Get(personId, page);
+          return Email.GetShort(personId, page);
+
+        case "emailcount":
+          int pId = int.Parse(k[1]);
+          return Email.GetCount(pId);
 
         case "mailboxes":
           return PublicMailBox.Get();
+        
         default:
           return null;
       }

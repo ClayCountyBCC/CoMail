@@ -15,8 +15,9 @@ namespace CoMail
     DateSent_ToString: string;
     Body: string;
     AttachmentCount: number;
-  
-    Get(lh: LocationHash): Promise<Array<Email>>;
+    Attachments: Array<any>;
+    Get(EmailId: number): Promise<Email>;
+    GetList(lh: LocationHash): Promise<Array<Email>>;
     GetCount(lh: LocationHash): Promise<number>;
     CheckMailbox(MailboxName: string): boolean;
   
@@ -35,12 +36,30 @@ namespace CoMail
     public DateSent_ToString: string;
     public Body: string;
     public AttachmentCount: number;
+    Attachments: Array<any>;
 
     Constructor()
     {
     }
+
+    public Get(EmailId:number): Promise<Email>
+    {
+      var x = XHR.Get("/API/Email/" + EmailId.toString());
+      return new Promise<Email>(function (resolve, reject)
+      {
+        x.then(function (response)
+        {
+          let ar: Email = JSON.parse(response.Text);
+          return resolve(ar);
+        }).catch(function ()
+        {
+          console.log("error in Get Email");
+          return reject(null);
+        });
+      });
+    }
     
-    public Get(lh: LocationHash): Promise<Array<Email>>
+    public GetList(lh: LocationHash): Promise<Array<Email>>
     {
       if (!this.CheckMailbox(lh.Mailbox)) return;
 
@@ -58,7 +77,7 @@ namespace CoMail
           return resolve(ar);
         }).catch(function ()
         {
-          console.log("error in Get Email");
+          console.log("error in Get EmailList");
           return reject(null);
         });
       });
@@ -67,22 +86,21 @@ namespace CoMail
     public GetCount(lh: LocationHash): Promise<number>
     {
       if (!this.CheckMailbox(lh.Mailbox)) return;
-
       let s = lh.Subject.length === 0 ? "" : "subject=" + lh.Subject;
       let f = lh.From.length === 0 ? "" : "from=" + lh.From;
       let arg = "";
       if (s.length > 0) arg = "?" + s;
       if (f.length > 0) arg = arg.length === 0 ? "?" + f : arg + "&" + f;
-      var x = XHR.Get("/API/EmailCount/" + lh.Mailbox + "/" + (lh.Page - 1) + "/" + arg);
+      var x = XHR.Get("/API/EmailCount/?mailbox=" + lh.Mailbox + arg);
       return new Promise<number>(function (resolve, reject)
       {
         x.then(function (response)
         {
-          let resp = JSON.parse(response.Text);
+          let resp:number = JSON.parse(response.Text);
           return resolve(resp);
         }).catch(function ()
         {
-          console.log("error in Get Email");
+          console.log("error in Get EmailCount");
           return reject(null);
         });
       });

@@ -8,6 +8,7 @@
     Subject: string;
     From: string;
     constructor(locationHash: string);
+    AddEmailId(EmailId: number): string;
   }
 
   export class LocationHash// implements ILocationHash
@@ -45,6 +46,32 @@
       }
       
     }
+
+    public AddEmailId(EmailId: number): string
+    { // this function is going to take the current LocationHash
+      // and using its current properties, going to emit an updated hash
+      // with a new EmailId.
+      let h: string = "";
+      if (this.Mailbox.length > 0) h += "&mailbox=" + this.Mailbox;
+      if (this.Page > -1) h += "&page=" + this.Page.toString();
+      if (this.Subject.length > 0) h += "&subject=" + this.Subject;
+      if (this.From.length > 0) h += "&from=" + this.From;
+      h += "&emailid=" + EmailId.toString();
+      return h.substring(1);
+    }
+
+    public RemoveEmailId(): string
+    { // this function is going to take the current LocationHash
+      // and using its current properties, going to emit an updated hash
+      // with a new EmailId.
+      let h: string = "";
+      if (this.Mailbox.length > 0) h += "&mailbox=" + this.Mailbox;
+      if (this.Page > -1) h += "&page=" + this.Page.toString();
+      if (this.Subject.length > 0) h += "&subject=" + this.Subject;
+      if (this.From.length > 0) h += "&from=" + this.From;
+      return h.substring(1);
+    }
+
 
   }
 

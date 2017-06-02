@@ -103,6 +103,98 @@ namespace CoMail.Models
 
     }
 
+    public static Email Get(long emailId)
+    {
+      var dp = new DynamicParameters();
+      dp.Add("@EmailId", emailId);
+      string query = $@"
+        SELECT 
+          id Id,
+          fromAddress 'From',
+          toAddress 'To',
+          ccAddress CC,
+          originalArcId OriginalId,
+          dateReceived DateReceived,
+          dateSent DateSent,
+          subject Subject,
+          body Body,
+          attachmentCount AttachmentCount
+        FROM email
+        WHERE id = @EmailId;";
+      try
+      {
+        var el = Constants.Get_Data<Email>(query, dp, Constants.csMain);
+        if (el.Count() == 1)
+        {
+          return el.First();
+        } else
+        {
+          return null;
+        }
+      }
+      catch (Exception ex)
+      {
+        new ErrorLog(ex, query);
+        return null;
+      }
+
+
+    }
+
+    public static List<Email> GetShort(
+      int personId,
+      int page = 0,
+      string subject = "",
+      string from = "")
+    {
+      string sub = "";
+      string frm = "";
+      var dp = new DynamicParameters();
+      dp.Add("@PersonId", personId);
+      dp.Add("@Page", (int)(page * 20));
+      if (subject.Length > 0)
+      {
+        dp.Add("@Subject", subject);
+        sub = " AND subject LIKE '%' + @Subject + '%' ";
+      }
+      if (from.Length > 0)
+      {
+        dp.Add("@From", from);
+        frm = " AND fromAddress LIKE '%' + @From + '%' ";
+      }
+      string query = $@"
+        SELECT 
+          E.id Id,
+          fromAddress 'From',
+          '' 'To',
+          '' CC,
+          0 OriginalId,
+          dateReceived DateReceived,
+          dateSent DateSent,
+          subject Subject,
+          '' Body,
+          attachmentCount AttachmentCount
+        FROM email E
+        INNER JOIN emailMailboxLookup EML ON E.id = EML.emailId
+        INNER JOIN person P ON P.id = EML.personId
+        WHERE P.id = @PersonId
+          { sub }
+          { frm }
+        ORDER BY E.dateReceived DESC
+        OFFSET @Page ROWS FETCH NEXT 20 ROWS ONLY;";
+      try
+      {
+        return Constants.Get_Data<Email>(query, dp, Constants.csMain);
+      }
+      catch (Exception ex)
+      {
+        new ErrorLog(ex, query);
+        return null;
+      }
+
+
+    }
+
     public static int GetCount(
       int personId,
       string subject = "",

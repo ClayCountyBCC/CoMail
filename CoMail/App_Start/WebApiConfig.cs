@@ -29,6 +29,19 @@ namespace CoMail
           from = RouteParameter.Optional
         }
         );
+      config.Routes.MapHttpRoute(
+        name: "EmailCountApi",
+        routeTemplate: "api/{controller}/{mailbox}",
+        defaults: new
+        {
+          subject = RouteParameter.Optional,
+          from = RouteParameter.Optional
+        }
+        );
+      config.Routes.MapHttpRoute(
+        name: "FileApi",
+        routeTemplate: "api/{controller}/id/Guid/AttachmentId",
+        defaults: new { });
 
     }
   }

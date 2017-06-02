@@ -1,4 +1,15 @@
-﻿#MailboxList {
+﻿
+.modal-lg {
+  max-width: 80%;
+}
+.modal-body > div > div {
+  border-bottom: dotted 1px rgba(0, 0, 0, 0.2);
+  margin-bottom: .5em;
+}
+#MailboxList {
+  display: none;
+}
+#MailboxView{
   display: none;
 }
 #MailboxList ul {
@@ -8,7 +19,6 @@ html, body
 {
   margin: 0;
   padding: 0;
-  /*height: 100%;*/
   width: 100%;
   font-family: sans-serif;
   outline-color: darkgray;
@@ -17,17 +27,12 @@ html, body
   background-color: lightgrey;
 }
 
-::-webkit-scrollbar
-{
-  display: none;
-}
-
 .main-container
 {
-  /*height: 100%;*/
   min-width: 320px;
   padding-top: 5em;
   background-color: aliceblue;
+  padding-bottom: 1em;
 }
 
 .NoPadding
@@ -409,9 +414,12 @@ ul, menu, dir
 
 #EmailTableHeader
 {
-  border-bottom: 1px black solid;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
   background-color: #b0e0e6;
-  padding: 0;
+  padding-top: .75em;
+  padding-bottom: .75em;
+  font-size: larger;
+  
 }
 
 .page-link
@@ -423,7 +431,8 @@ ul, menu, dir
 
 .EmailDataRow
 {
-  border: 1px black solid;
+  border-left: 1px solid rgba(0, 0, 0, 0.2);
+  border-right: 1px solid rgba(0, 0, 0, 0.2);
 }
 
 .EmailDataCell
@@ -431,11 +440,6 @@ ul, menu, dir
   padding-top: 5px;
   padding-bottom: 5px;
   margin-left: 0;
-}
-
-.EmailTableData
-{
-  display: table;
 }
 
 .EmailDataRow:nth-of-type(2n)
@@ -450,17 +454,16 @@ ul, menu, dir
   padding-bottom: 0;
   width: auto;
 }
-
-.bg-faded
-{
-  background-color: powderblue;
-}
-
-.pre-scrollable::-webkit-scrollbar
-{
-  display: normal;
-}
-
+  .MyInfoButton a:visited,
+  .MyInfoButton a:focus, 
+  .MyInfoButton a {
+    text-decoration: none;
+    color: #fff !important;
+  }
+  .bg-faded
+  {
+    background-color: powderblue;
+  }
 /*.EmailDataCell:nth-of-type(2n)
 {
 }*/
@@ -503,4 +506,75 @@ hr.dotted
 .modal-title
 {
   font-size: 2rem;
+}
+
+.glyphicon-refresh-animate
+{
+  -webkit-animation: spinw .7s infinite linear;
+  -moz-animation: spin .7s infinite linear;
+  -o-animation: spin .7s infinite linear;
+  animation: spin .7s infinite linear;
+}
+
+@keyframes spin
+{
+  from
+  {
+    -moz-transform: scale(1) rotate(0deg);
+    -ms-transform: scale(1) rotate(0deg);
+    -o-transform: scale(1) rotate(0deg);
+    -webkit-transform: scale(1) rotate(0deg);
+    transform: scale(1) rotate(0deg);
+  }
+
+  to
+  {
+    -moz-transform: scale(1) rotate(360deg);
+    -ms-transform: scale(1) rotate(360deg);
+    -o-transform: scale(1) rotate(360deg);
+    -webkit-transform: scale(1) rotate(360deg);
+    transform: scale(1) rotate(360deg);
+  }
+}
+
+@-webkit-keyframes spinw
+{
+  from
+  {
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+
+  to
+  {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+@-moz-keyframes spinm
+{
+  from
+  {
+    -moz-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+
+  to
+  {
+    -moz-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
 }

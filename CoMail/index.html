@@ -4,9 +4,10 @@
   <title>Email Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link type="text/css" rel="stylesheet" xmlns="http://www.w3.org/1999/xhtml" />
+  <link href="Content/favicon.ico" rel="icon" type="image/x-icon" />
   <meta name="description" content="View email sent and received by Officials in Clay County, Florida." />
-  <link href="Content/bootstrap.min.css" rel="stylesheet" />
-  <link href="Content/bootstrap-grid.min.css" rel="stylesheet" />
+  <link href="Content/bootstrap.min.css" rel="stylesheet" />  
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
   <link href="Content/main.css" rel="stylesheet" />
 
 </head>
@@ -24,36 +25,32 @@
     </div>
   </nav>
 
+
+
   <div class="main-container">
-    <!-- Landing Page blurb -->
-    <!--<div class="flex-row container" id="LandingPageContent">
-      <div class="col-9" id="LandingPageArticle">
-        <h1>Landing Page Title</h1>
-        <section><p>Possible Blurb for landing page</p></section>
-      </div>
-      <div class="col-3 d-flex">
-        <aside id="LandingPageAside"><h5>Landing Page Aside Heading</h5>Possible Aside Section</aside>
-      </div>
-    </div>-->
-    <!-- Mailbox list section -->
+    <div class="col-12"
+         id="Loading">
+      <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+      <span class="sr-only">Loading...</span>
+      <p style="display: inline-block;">Loading information...</p>
+    </div>
     <section id="MailboxList"
              class="content-wrapper">
       <h2>County Commissioners</h2>
       <ul id="Commissioners"
-          class="round"></ul>
+          class="d-flex flex-row flex-wrap"></ul>
       <h2>Former Commissioners</h2>
       <ul id="FormerCommissioners"
-          class="round"></ul>
+          class="d-flex flex-row flex-wrap"></ul>
       <h2>Other Public Mailboxes</h2>
       <ul id="OtherPublic"
-          class="round"></ul>
+          class="d-flex flex-row flex-wrap"></ul>
     </section>
 
-    <!-- Email list section -->
     <section class="content-wrapper"
-             id="EmailList">
+             id="MailboxView">
       <section class="" style="margin-bottom: 1rem;">
-        <h3 id="CommissionerName">Name Here</h3>
+        <h3 id="MailboxName"></h3>
       </section>
 
       <!--<div class="flex-wrap ">
@@ -139,121 +136,75 @@
           </div>
         </div>
 
-        <div class="flex-row">
-          <div class="d-flex flex-row flex-wrap no-gutters " id="EmailTableHeader">
-            <h3 class="col-3 d-flex ">Date/Time Received</h3>
-            <h3 class="col-3 d-flex ">From</h3>
-            <h3 class="col-4 d-flex ">Subject</h3>
-            <h3 class="col-2 d-flex">View</h3>
+        <div class="d-flex flex-row flex-rap" id="EmailTableHeader">
+          <div class="col-12 d-flex flex-row flex-wrap">
+            <div class="col-3 d-flex">Date/Time Received</div>
+            <div class="col-3 d-flex">From</div>
+            <div class="col-4 d-flex">Subject</div>
+            <div class="col-2 d-flex"></div>
           </div>
-
         </div>
 
-        <div class="d-flex flex-row flex-wrap no-gutters pre-scrollable EmailTableData" id="">
-          <div class="d-flex col-12 collapse EmailDataRow" style="overflow:hidden">
-            <div class="col-3 EmailDataCell" style="overflow:hidden" id="DateTimeReceived">05/26/2017 10:30:58 AM</div>
-            <div class="col-3 EmailDataCell" id="From" style="overflow: hidden">jeremy.west@claycountygov.com</div>
-            <div class="col-4 EmailDataCell" id="EmailSubject">My brain is on Hiatus because of bootstrap 4</div>
-            <div class="col-2 EmailDataCell" id="ViewEmailButton">
-              <button type="button" class="btn btn-info MyInfoButton">View</button>
-            </div>
-          </div>
-          <div class="d-flex col-12 collapse EmailDataRow">
-            <div class="col-3 EmailDataCell" style="overflow:hidden" id="DateTimeReceived">05/26/2017 10:30:58 AM</div>
-            <div class="col-3 EmailDataCell" style="overflow:hidden" id="From">jeremy.west@claycountygov.com</div>
-            <div class="col-4 EmailDataCell" style="overflow:hidden" id="EmailSubject">My brain is on Hiatus because of bootstrap 4</div>
-            <div class="col-2 EmailDataCell" style="overflow:hidden" id="ViewEmailButton">
-              <button type="button" class="btn btn-info MyInfoButton">View</button>
-            </div>
-          </div>
-          <div class="d-flex col-12 collapse EmailDataRow">
-            <div class="col-3 EmailDataCell" style="overflow:hidden" id="DateTimeReceived">05/26/2017 10:30:58 AM</div>
-            <div class="col-3 EmailDataCell" style="overflow:hidden" id="From">jeremy.west@claycountygov.com</div>
-            <div class="col-4 EmailDataCell" style="overflow:hidden" id="EmailSubject">My brain is on Hiatus because of bootstrap 4</div>
-            <div class="col-2 EmailDataCell" style="overflow:hidden" id="ViewEmailButton">
-              <button type="button" class="btn btn-info MyInfoButton" data-toggle="modal" data-target="#exampleModalLong">View</button>
-            </div>
-          </div>
-
-
-          <div class="d-flex col-12 collapse EmailDataRow">
-            <div class="col-3 EmailDataCell" style="overflow:hidden" id="DateTimeReceived">05/26/2017 10:30:58 AM</div>
-            <div class="col-3 EmailDataCell" style="overflow:hidden" id="From">jeremy.west@claycountygov.com</div>
-            <div class="col-4 EmailDataCell" style="overflow:hidden" id="EmailSubject">My brain is on Hiatus because of bootstrap 4</div>
-            <!-- Button to toggle modal-->
-            <div class="col-2 EmailDataCell" style="overflow:hidden" id="ViewEmailButton">
-              <button type="button" class="btn btn-info MyInfoButton" data-toggle="modal" data-target="#exampleModalLong">View</button>
-            </div>
-          </div>
+        <div id="EmailList"
+             class="
+                d-flex 
+                flex-row 
+                flex-wrap">
         </div>
       </section>
 
     </section>
-
-    <!-- Modal / Email section -->
-    <!-- Modal -->
-    <div class="modal fade" id="exampleModalLong" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+    <div class="modal fade" id="EmailView" tabindex="-1" role="dialog" aria-labelledby="Email View" aria-hidden="true">
       <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-          <div class="modal-header">
-            <div class="col-12 modal-title">
-              <div class="">Email View</div>
-            </div>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
+          <!--<div class="col-12"
+               id="EmailLoading">
+            <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+            <span class="sr-only">Loading...</span>
+            <p style="display: inline-block;">Loading information...</p>
+          </div>-->
           <div class="modal-body">
-            <div class="container-fluid my-modal-stuff">
-              <div class="row">
-                <div class="col-3">From:</div>
-                <div class="col-8 ModalMessage">daniel.mccartney@claycountygov.com</div>
+            <div class="container-fluid">
 
+              <div class="row flex-row flex-wrap">
+                <div class="col-2">Date Received:</div>
+                <div id="EmailDateReceived"
+                     class="col-10"></div>
               </div>
-              <hr class="dotted">
 
-              <div class="row">
-
-                <div class="col-3">Date/Time Received:</div>
-                <div class="col-8 ModalMessage">05/26/2017 10:30:58 AM</div>
-
+              <div class="row flex-row flex-wrap">
+                <div class="col-2">To:</div>
+                <div id="EmailTo"
+                     class="col-10"></div>
               </div>
-              <hr class="dotted">
 
-              <div class="row">
-                <div class="col-3">Subject:</div>
-                <div class="col-8 ModalMessage">What is today's letter?</div>
-                <hr class="dotted">
-
+              <div class="row flex-row flex-wrap">
+                <div class="col-2">Cc:</div>
+                <div id="EmailCc"
+                     class="col-10"></div>
               </div>
-              <hr class="dotted">
 
-              <div class="row">
-                <div class="col-3">Message:</div>
-                <div class="col-8 align-self-center ModalMessage">
-                  This message has been brought to you by the letter 'A',
-                  and the number '1'.
-                  <br />
-                  <br />
-                  <div class="" id="EmailSignature">
-                    Daniel McCartney
-                  </div>
-                </div>
+              <div class="row flex-row flex-wrap">
+                <div class="col-2">From:</div>
+                <div id="EmailFrom"
+                     class="col-10 flex-wrap"></div>
               </div>
-              <hr class="dotted">
 
+              <div class="row flex-row flex-wrap">
+                <div class="col-2">Subject:</div>
+                <div id="EmailSubject"
+                     class="col-10"></div>
+              </div>
+              <div class="row flex-row flex-wrap">
+                <div class="col-2">Attachments:</div>
+                <div id="EmailAttachments"
+                     class="col-10 flex-wrap"></div>
+              </div>
 
-              <div class="row">
-                <div class="col-sm-9">
-                  Level 1: attachments?
-                  <div class="row">
-                    <div class="col-5 ">
-                      Level 2: images?
-                    </div>
-                    <div class="col-5 ">
-                      Level 2: Another Image?
-                    </div>
-                  </div>
+              <div class="row flex-row flex-wrap">
+                <div class="col-2">Message:</div>
+                <div id="EmailMessage"
+                     class="col-10">
                 </div>
               </div>
             </div>
@@ -264,28 +215,26 @@
         </div>
       </div>
     </div>
-
-
-    <!-- end modal -->
-
-
-
   </div>
 
   <script>
     document.addEventListener("DOMContentLoaded", function (event)
     {
       CoMail.Start();
+      $('#EmailView').on('hide.bs.modal', CoMail.ModalClosed);
 
     });
   </script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js"></script>
   <script src="Scripts/jquery-3.1.1.min.js"></script>
   <script src="Scripts/jquery-ui-1.12.1.min.js"></script>
+  <script src="Scripts/bootstrap.min.js"></script>
   <script src="Scripts/LocationHash.js"></script>
   <script src="Scripts/PublicMailBox.js"></script>
   <script src="Scripts/es6-promise.min.js"></script>
   <script src="Scripts/XHR.js"></script>
   <script src="Scripts/Email.js"></script>
+  <script src="Scripts/UI.js"></script>
   <script src="Scripts/app.js"></script>
 </body>
 

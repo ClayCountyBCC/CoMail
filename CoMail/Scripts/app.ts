@@ -1,14 +1,14 @@
 ﻿/// <reference path="locationhash.ts" />
 /// <reference path="xhr.ts" />
+/// <reference path="ui.ts" />
 /// <reference path="typings/es6-promise/es6-promise.d.ts" />
+declare var $: any;
 
 namespace CoMail
 {
   export let mailboxes: Array<PublicMailBox> = [];
-  export let currentEmail: Array<Email> = [];
-  export let currentMailbox: string;
-  export let currentEmailId: number;
-  export let currentPage: number;
+  export let currentEmailList: Array<Email> = [];
+  export let currentHash: LocationHash = null;
   export let currentEmailCount: number;
 
   export function Start(): void
@@ -17,6 +17,14 @@ namespace CoMail
     // let's check the current hash to make sure we don't need to start on a given mailbox / page / email
     GetMailBoxes();
   }
+  
+  export function ModalClosed(evt:Event)
+  {
+    location.hash = currentHash.RemoveEmailId();
+    let emailMessage = document.getElementById("EmailMessage");
+    clearElement(emailMessage);
+  }
+
   export function HashChange()
   {
     HandleHash();
@@ -24,41 +32,73 @@ namespace CoMail
 
   function HandleHash()
   {
-    if (location.hash.length <= 1) return;
     let hash = location.hash;
-    let h: LocationHash = new LocationHash(location.hash.substring(1));
-    let oldMailbox = currentMailbox;
-    currentMailbox = h.Mailbox;
-    currentPage = h.Page;
-    currentEmailId = h.EmailId;
-    if (h.EmailId === -1)
-    {
-      GetEmail(h);
-      GetEmailCount(h);
-    } else
-    {
-      // we load the specific email
-    }
+    let oldHash = currentHash;
+    currentHash = new LocationHash(location.hash.substring(1));
+    ShowMenu(currentHash, oldHash);
   }
 
-
-  function GetEmail(lh:LocationHash): void
+  function ShowMenu(lh:LocationHash, oh:LocationHash)
   {
+    if (lh.Mailbox.length === 0)
+    {
+      Show("MailboxList");
+      ClearEmailList();
+      Hide("MailboxView");
+    }
+    else
+    {
+      if (oh === null || oh.Mailbox !== lh.Mailbox || oh.Page !== lh.Page)
+      {
+        UpdateMailboxName(lh.Mailbox);
+        GetEmailList(currentHash);
+        GetEmailCount(currentHash);
+      }
+      Hide("MailboxList");
+      Show("MailboxView");
+    }
+    if (lh.EmailId > -1)
+    {
+      GetEmail(lh.EmailId);
+    }
+    
+  }
+
+  function GetEmail(EmailId: number): void
+  {
+    Show("Loading");
     let email = new Email();
-    email.Get(lh)
+    email.Get(EmailId)
+      .then(
+      function (mail: Email): void
+      {
+        BuildEmailView(mail);
+        $('#EmailView').modal('show');
+        Hide("Loading");
+      }, function (): void
+      {
+        console.log('error getting Email');
+        Hide("EmailLoading");
+      });
+  }
+
+  function GetEmailList(lh:LocationHash): void
+  {
+    Show("Loading");
+    let EmailList = document.getElementById("EmailList");
+    clearElement(EmailList);
+    let email = new Email();
+    email.GetList(lh)
       .then(
       function (allmail: Array<Email>): void
       {
-        console.log("email", allmail);
-        currentEmail = allmail;
-        //let element = document.getElementById("ListMail");
-        //var parser = new DOMParser();
-        //var d = parser.parseFromString(allmail[0].Body, "text/html");
-        //element.appendChild(d.documentElement);
-
+        currentEmailList = allmail;
+        BuildEmailList();
+        Hide("Loading");
       }, function (): void
       {
-        console.log('error getting All Email');
+        console.log('error getting Email List');
+        Hide("Loading");
       });
   }
 
@@ -69,17 +109,11 @@ namespace CoMail
       .then(
       function (emailCount: number): void
       {
-        console.log("emailCount", emailCount);
         currentEmailCount = emailCount;
         BuildPaging();
-        //let element = document.getElementById("ListMail");
-        //var parser = new DOMParser();
-        //var d = parser.parseFromString(allmail[0].Body, "text/html");
-        //element.appendChild(d.documentElement);
-
       }, function (): void
       {
-        console.log('error getting All Email');
+        console.log('error getting Email Count');
       });
   }
 
@@ -89,40 +123,28 @@ namespace CoMail
     let tpc = document.getElementById("TotalPageCount");
     clearElement(tpc);
     let max = Math.floor(currentEmailCount / 20);
-    tpc.appendChild(document.createTextNode("Page " + currentPage + " of " + max));
+    tpc.appendChild(document.createTextNode("Page " + currentHash.Page + " of " + max));
 
     let prev = (<HTMLAnchorElement>document.getElementById("PreviousPage"));
     prev.href = location.hash;
-    if (currentPage > 1)
-    {
-      if (prev.href.indexOf("page=") > -1)
-      {
-        prev.href = prev.href.replace("page=" + currentPage, "page=" + (currentPage - 1));
-      } else
-      {
-        prev.href += "&page=" + (currentPage - 1);
-      }
-    }
+    UpdatePage(prev, currentHash.Page - 1, max);
 
     let next = (<HTMLAnchorElement>document.getElementById("NextPage"));
-    next.href = location.hash;
-    if (currentPage < max)
-    {
-      if (next.href.indexOf("page=") > -1)
-      {
-        next.href = next.href.replace("page=" + currentPage, "page=" + (currentPage + 1));
-      } else
-      {
-        next.href += "&page=" + (currentPage + 1);
-      }
-    }
+    UpdatePage(next, currentHash.Page + 1, max);
   }
 
-  export function clearElement(node: HTMLElement): void
-  { // this function just emptys an element of all its child nodes.
-    while (node.firstChild)
+  function UpdatePage(a: HTMLAnchorElement, page:number, max:number)
+  {
+    a.href = location.hash;
+    if (page < max && page > 0)
     {
-      node.removeChild(node.firstChild);
+      if (a.href.indexOf("page=") > -1)
+      {
+        a.href = a.href.replace("page=" + currentHash.Page, "page=" + page);
+      } else
+      {
+        a.href += "&page=" + page;
+      }
     }
   }
 
@@ -133,9 +155,9 @@ namespace CoMail
       .then(
       function (all: Array<PublicMailBox>): void
       {
-        console.log("AllMailBoxes", all);
         mailboxes = all;
         BuildMailboxes();
+        Hide("Loading");
         if (location.hash.substring(1).length > 0) HandleHash();
       }, function (): void
       {
@@ -143,44 +165,5 @@ namespace CoMail
       });
   }
 
-  function BuildMailboxes()
-  {
-    let comm: HTMLUListElement = (<HTMLUListElement>document.getElementById("Commissioners"));
-    let former: HTMLUListElement = (<HTMLUListElement>document.getElementById("FormerCommissioners"));
-    let other: HTMLUListElement = (<HTMLUListElement>document.getElementById("OtherPublic"));
 
-    for (let m of CoMail.mailboxes)
-    {
-      if (m.Active === 0)
-      {
-        if (m.Title.indexOf("ommiss") !== -1) // they are a former commissioner
-        {
-          former.appendChild(BuildMailboxItem(m.MailboxName, m.Name, m.Title))
-        }
-        else // they are other than a commissioner
-        {
-          other.appendChild(BuildMailboxItem(m.MailboxName, m.Name, m.Title))
-        }
-      }
-      else
-      {
-        comm.appendChild(BuildMailboxItem(m.MailboxName, m.Name, m.Title))
-      }
-    }
-    document.getElementById("MailboxList").style.display = "block";    
-  }
-
-  function BuildMailboxItem(mailbox: string, name: string, title: string): HTMLLIElement
-  {
-    let li: HTMLLIElement = document.createElement("li");
-    let sp: HTMLSpanElement = document.createElement("span");
-    sp.style.marginRight = "1em";
-    sp.appendChild(document.createTextNode(title.replace("Commissioner of ", "").replace("Former", "")));
-    li.appendChild(sp);
-    let a: HTMLAnchorElement = document.createElement("a");
-    a.href = "#mailbox=" + mailbox + "&page=1";
-    a.appendChild(document.createTextNode(name));
-    li.appendChild(a);
-    return li;
-  }
 }
