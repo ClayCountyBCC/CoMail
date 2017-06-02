@@ -1,0 +1,20 @@
+[
+  {
+    "outputFileName": "Scripts/bundle.js",
+    "inputFiles": [
+      "Scripts/locationhash.js",
+      "Scripts/PublicMailBox.js",
+      "scripts/es6-promise.min.js",
+      "Scripts/Email.js",
+      "Scripts/xhr.js",
+      "Scripts/ui.js",
+      "Scripts/app.js"
+    ]
+  },
+  {
+    "outputFileName": "Content/main.min.css",
+    "inputFiles": [
+      "Content/main.css"
+    ]
+  }
+]

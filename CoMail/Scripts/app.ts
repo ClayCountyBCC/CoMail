@@ -110,6 +110,7 @@ namespace CoMail
       function (emailCount: number): void
       {
         currentEmailCount = emailCount;
+        console.log('current email count', currentEmailCount);
         BuildPaging();
       }, function (): void
       {
@@ -122,7 +123,7 @@ namespace CoMail
     // first let's update the totalpagecount
     let tpc = document.getElementById("TotalPageCount");
     clearElement(tpc);
-    let max = Math.floor(currentEmailCount / 20);
+    let max = Math.max(Math.floor(currentEmailCount / 20), 1);
     tpc.appendChild(document.createTextNode("Page " + currentHash.Page + " of " + max));
 
     let prev = (<HTMLAnchorElement>document.getElementById("PreviousPage"));

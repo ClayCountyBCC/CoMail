@@ -43,55 +43,51 @@ var CoMail;
     }
     CoMail.UpdateMailboxName = UpdateMailboxName;
     function ClearEmailList() {
-        console.log('ClearEmailList');
         var emailList = document.getElementById("EmailList");
         clearElement(emailList);
         return emailList;
     }
     CoMail.ClearEmailList = ClearEmailList;
     function BuildEmailList() {
-        console.log('BuildEmailList');
         var emailList = ClearEmailList();
         var df = document.createDocumentFragment();
         for (var _i = 0, currentEmailList_1 = CoMail.currentEmailList; _i < currentEmailList_1.length; _i++) {
             var email = currentEmailList_1[_i];
             var edr = document.createElement("div");
-            edr.classList.add("d-flex", "col-12", "EmailDataRow"); //collapse
-            var daterec = document.createElement("div");
-            daterec.classList.add("col-3", "EmailDataCell");
-            daterec.appendChild(document.createTextNode(email.DateReceived_ToString));
+            edr.classList.add("d-flex");
+            edr.classList.add("col-12");
+            edr.classList.add("flex-row");
+            edr.classList.add("EmailDataRow");
+            edr.classList.add("flex-wrap"); //collapse
+            var daterec = CreateEmailListElement("3", email.DateReceived_ToString);
             edr.appendChild(daterec);
-            var from = document.createElement("div");
-            from.classList.add("col-3", "EmailDataCell");
-            from.appendChild(document.createTextNode(email.From));
+            var from = CreateEmailListElement("3", email.From);
             edr.appendChild(from);
-            var subject = document.createElement("div");
-            subject.classList.add("col-4", "EmailDataCell");
-            subject.appendChild(document.createTextNode(email.Subject));
+            var subject = CreateEmailListElement("4", email.Subject);
             edr.appendChild(subject);
-            var view = document.createElement("div");
-            view.classList.add("col-2", "EmailDataCell");
+            var view = CreateEmailListElement("2", "");
+            view.classList.add("CenterButton");
             var viewButton = document.createElement("a");
             viewButton.href = "#" + CoMail.currentHash.AddEmailId(email.Id);
-            viewButton.classList.add("btn", "btn-info", "MyInfoButton");
-            //viewButton.setAttribute("data-toggle", "modal");
-            //viewButton.setAttribute("data-target", "#EmailView");
+            viewButton.classList.add("btn");
+            viewButton.classList.add("btn-info");
+            viewButton.classList.add("MyInfoButton");
             viewButton.appendChild(document.createTextNode("View"));
             view.appendChild(viewButton);
             edr.appendChild(view);
             df.appendChild(edr);
         }
         emailList.appendChild(df);
-        //<div class="d-flex col-12 collapse EmailDataRow">
-        //	<div class="col-3 EmailDataCell" style="overflow:hidden" id="DateTimeReceived">05/26/2017 10:30:58 AM</div>
-        //	<div class="col-3 EmailDataCell" id="From" style="overflow: hidden">jeremy.west@claycountygov.com</div>
-        //	<div class="col-4 EmailDataCell" id="EmailSubject">My brain is on Hiatus because of bootstrap 4</div>
-        //	<div class="col-2 EmailDataCell" id="ViewEmailButton">
-        //	<button type="button" class="btn btn-info MyInfoButton">View</button>
-        //	</div>
-        //</div>
     }
     CoMail.BuildEmailList = BuildEmailList;
+    function CreateEmailListElement(size, text) {
+        var e = document.createElement("div");
+        e.classList.add("col-" + size);
+        e.classList.add("EmailDataCell");
+        if (text.length > 0)
+            e.appendChild(document.createTextNode(text));
+        return e;
+    }
     function BuildMailboxes() {
         var comm = document.getElementById("Commissioners");
         var former = document.getElementById("FormerCommissioners");
@@ -115,7 +111,10 @@ var CoMail;
     CoMail.BuildMailboxes = BuildMailboxes;
     function BuildMailboxItem(mailbox, name, title) {
         var li = document.createElement("li");
-        li.classList.add("d-flex", "col-sm-6", "col-xl-4", "col-xs-12");
+        li.classList.add("d-flex");
+        li.classList.add("col-sm-6");
+        li.classList.add("col-xl-4");
+        li.classList.add("col-xs-12");
         var sp = document.createElement("span");
         sp.style.marginRight = "1em";
         sp.appendChild(document.createTextNode(title.replace("Commissioner of ", "").replace("Former", "")));
@@ -144,4 +143,4 @@ var CoMail;
     }
     CoMail.Hide = Hide;
 })(CoMail || (CoMail = {}));
-//# sourceMappingURL=UI.js.map
+//# sourceMappingURL=ui.js.map

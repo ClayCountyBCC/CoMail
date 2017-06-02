@@ -21,7 +21,7 @@ namespace CoMail.Controllers
       ) 
     {
 
-      //Thread.Sleep(5000);
+      //Thread.Sleep(3000);
       var pl = (List<PublicMailBox>)myCache.GetItem(
         "mailboxes",
         new CacheItemPolicy() { AbsoluteExpiration = DateTime.Now.AddHours(16) });

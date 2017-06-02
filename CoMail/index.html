@@ -7,15 +7,22 @@
   <link href="Content/favicon.ico" rel="icon" type="image/x-icon" />
   <meta name="description" content="View email sent and received by Officials in Clay County, Florida." />
   <link href="Content/bootstrap.min.css" rel="stylesheet" />  
-  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
-  <link href="Content/main.css" rel="stylesheet" />
-
+  <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+  <link href="Content/bootstrap-grid.min.css" rel="stylesheet" />
+  <link href="Content/main.min.css" rel="stylesheet" />
 </head>
 <body class="container">
   <nav class="navbar navbar-light bg-faded fixed-top">
     <div class="d-inline-flex container justify-content-between">
       <a class="navbar-brand" href="#">Clay County Public Email</a>
+      <div class="col-4"
+           id="Loading">
+        <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+        <span class="sr-only">Loading...</span>
+        <p style="display: inline-block;">Loading information...</p>
+      </div>
       <div class="navbar">
+
         <ul class="navbar-nav text-center">
           <li class="nav-item active">
             <a class="nav-link" href="#">Home</a>
@@ -25,15 +32,7 @@
     </div>
   </nav>
 
-
-
   <div class="main-container">
-    <div class="col-12"
-         id="Loading">
-      <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
-      <span class="sr-only">Loading...</span>
-      <p style="display: inline-block;">Loading information...</p>
-    </div>
     <section id="MailboxList"
              class="content-wrapper">
       <h2>County Commissioners</h2>
@@ -52,62 +51,6 @@
       <section class="" style="margin-bottom: 1rem;">
         <h3 id="MailboxName"></h3>
       </section>
-
-      <!--<div class="flex-wrap ">
-        <div class="
-               col-lg-3
-               col-md-6
-               col-sm-12
-               col-xs-12
-               justify-content-between
-               align-content-center
-               d-inline-flex
-               flex-wrap"
-             style="padding-left:0;">
-          <input class="
-                   col-lg-5
-                   col-md-6
-                   col-sm-12
-                   col-xs-12
-                   d-inline-flex
-                   form-control"
-                 placeholder="From..."
-                 type="text"
-                 id="datepicker1"
-                 style="border: 1px solid rgba(0,0,0,.15); border-radius:.25rem; " />
-          <input class="
-                   col-lg-5
-                   col-md-6
-                   col-sm-12
-                   col-xs-12
-                   d-inline-flex
-                   form-control"
-                 placeholder="To..."
-                 type="text"
-                 id="datepicker2"
-                 style="border: 1px solid rgba(0,0,0,.15); border-radius:.25rem;  " />
-        </div>
-        <input type="text"
-               class="
-                 col-lg-3
-                 col-md-6
-                 col-sm-12
-                 col-xs-12
-                 d-inline-flex
-                 form-control
-                 darkgray-Outline-Color"
-               placeholder="Filter Sender...">
-        <input type="text"
-               class="
-                 col-lg-4
-                 col-md-6
-                 col-sm-12
-                 col-xs-12
-                 d-inline-flex
-                 form-control
-                 darkgray-Outline-Color"
-               placeholder="Filter Subject...">
-      </div>-->
 
       <hr class="myDivider" />
 
@@ -136,7 +79,7 @@
           </div>
         </div>
 
-        <div class="d-flex flex-row flex-rap" id="EmailTableHeader">
+        <div class="d-flex flex-row flex-wrap" id="EmailTableHeader">
           <div class="col-12 d-flex flex-row flex-wrap">
             <div class="col-3 d-flex">Date/Time Received</div>
             <div class="col-3 d-flex">From</div>
@@ -146,10 +89,7 @@
         </div>
 
         <div id="EmailList"
-             class="
-                d-flex 
-                flex-row 
-                flex-wrap">
+             class="d-flex flex-row flex-wrap">
         </div>
       </section>
 
@@ -229,13 +169,7 @@
   <script src="Scripts/jquery-3.1.1.min.js"></script>
   <script src="Scripts/jquery-ui-1.12.1.min.js"></script>
   <script src="Scripts/bootstrap.min.js"></script>
-  <script src="Scripts/LocationHash.js"></script>
-  <script src="Scripts/PublicMailBox.js"></script>
-  <script src="Scripts/es6-promise.min.js"></script>
-  <script src="Scripts/XHR.js"></script>
-  <script src="Scripts/Email.js"></script>
-  <script src="Scripts/UI.js"></script>
-  <script src="Scripts/app.js"></script>
+  <script src="Scripts/bundle.min.js"></script>
 </body>
 
 </html>

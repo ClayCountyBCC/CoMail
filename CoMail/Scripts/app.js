@@ -81,6 +81,7 @@ var CoMail;
         email.GetCount(lh)
             .then(function (emailCount) {
             CoMail.currentEmailCount = emailCount;
+            console.log('current email count', CoMail.currentEmailCount);
             BuildPaging();
         }, function () {
             console.log('error getting Email Count');
@@ -90,7 +91,7 @@ var CoMail;
         // first let's update the totalpagecount
         var tpc = document.getElementById("TotalPageCount");
         CoMail.clearElement(tpc);
-        var max = Math.floor(CoMail.currentEmailCount / 20);
+        var max = Math.max(Math.floor(CoMail.currentEmailCount / 20), 1);
         tpc.appendChild(document.createTextNode("Page " + CoMail.currentHash.Page + " of " + max));
         var prev = document.getElementById("PreviousPage");
         prev.href = location.hash;

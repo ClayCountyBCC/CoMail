@@ -15,7 +15,7 @@ namespace CoMail.Controllers
     // GET: api/Email
     public IHttpActionResult Get(long id)
     {
-      //Thread.Sleep(5000);
+      //Thread.Sleep(3000);
       var CIP = new CacheItemPolicy()
       {
         AbsoluteExpiration = DateTime.Now.AddHours(1)

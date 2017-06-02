@@ -19,7 +19,7 @@ namespace CoMail.Controllers
       {
         AbsoluteExpiration = DateTime.Now.AddHours(16)
       };
-      //Thread.Sleep(5000);
+      //Thread.Sleep(3000);
       var mailboxes = (List<PublicMailBox>)myCache.GetItem("mailboxes", CIP);
       if (mailboxes != null)
       {

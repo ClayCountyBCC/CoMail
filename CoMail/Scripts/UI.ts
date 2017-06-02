@@ -54,7 +54,6 @@ namespace CoMail
 
   export function ClearEmailList() : HTMLDivElement
   {
-    console.log('ClearEmailList');
     let emailList: HTMLDivElement = (<HTMLDivElement>document.getElementById("EmailList"));
     clearElement(emailList);
     return emailList;
@@ -62,51 +61,48 @@ namespace CoMail
 
   export function BuildEmailList()
   {
-    console.log('BuildEmailList');
     let emailList: HTMLDivElement = ClearEmailList();
     let df: DocumentFragment = document.createDocumentFragment();
     for (let email of currentEmailList)
     {
       let edr: HTMLDivElement = document.createElement("div");
-      edr.classList.add("d-flex", "col-12", "EmailDataRow"); //collapse
+      edr.classList.add("d-flex");
+      edr.classList.add("col-12");
+      edr.classList.add("flex-row");
+      edr.classList.add("EmailDataRow");
+      edr.classList.add("flex-wrap"); //collapse
 
-      let daterec: HTMLDivElement = document.createElement("div");
-      daterec.classList.add("col-3", "EmailDataCell");
-      daterec.appendChild(document.createTextNode(email.DateReceived_ToString));
+      let daterec = CreateEmailListElement("3", email.DateReceived_ToString);
       edr.appendChild(daterec);
 
-      let from: HTMLDivElement = document.createElement("div");
-      from.classList.add("col-3", "EmailDataCell");
-      from.appendChild(document.createTextNode(email.From));
+      let from: HTMLDivElement = CreateEmailListElement("3", email.From);
       edr.appendChild(from);
 
-      let subject: HTMLDivElement = document.createElement("div");
-      subject.classList.add("col-4", "EmailDataCell");
-      subject.appendChild(document.createTextNode(email.Subject));
+      let subject: HTMLDivElement = CreateEmailListElement("4", email.Subject);
+
       edr.appendChild(subject);
 
-      let view: HTMLDivElement = document.createElement("div");
-      view.classList.add("col-2", "EmailDataCell");
+      let view: HTMLDivElement = CreateEmailListElement("2", "");
+      view.classList.add("CenterButton");
       let viewButton: HTMLAnchorElement = document.createElement("a");
-      viewButton.href = "#" + currentHash.AddEmailId(email.Id);
-      viewButton.classList.add("btn", "btn-info", "MyInfoButton");
-      //viewButton.setAttribute("data-toggle", "modal");
-      //viewButton.setAttribute("data-target", "#EmailView");
+      viewButton.href = "#" + currentHash.AddEmailId(email.Id);      
+      viewButton.classList.add("btn");
+      viewButton.classList.add("btn-info");
+      viewButton.classList.add("MyInfoButton");
       viewButton.appendChild(document.createTextNode("View"));
       view.appendChild(viewButton);
       edr.appendChild(view);
-
       df.appendChild(edr);
     }
     emailList.appendChild(df);
-//<div class="d-flex col-12 collapse EmailDataRow">
-//	<div class="col-3 EmailDataCell" style="overflow:hidden" id="DateTimeReceived">05/26/2017 10:30:58 AM</div>
-//	<div class="col-3 EmailDataCell" id="From" style="overflow: hidden">jeremy.west@claycountygov.com</div>
-//	<div class="col-4 EmailDataCell" id="EmailSubject">My brain is on Hiatus because of bootstrap 4</div>
-//	<div class="col-2 EmailDataCell" id="ViewEmailButton">
-//	<button type="button" class="btn btn-info MyInfoButton">View</button>
-//	</div>
-//</div>
+  }
+  function CreateEmailListElement(size: string, text: string): HTMLDivElement
+  {
+    let e: HTMLDivElement = document.createElement("div");
+    e.classList.add("col-" + size);
+    e.classList.add("EmailDataCell");
+    if(text.length > 0) e.appendChild(document.createTextNode(text));
+    return e;
   }
 
   export function BuildMailboxes()
@@ -139,7 +135,10 @@ namespace CoMail
   export function BuildMailboxItem(mailbox: string, name: string, title: string): HTMLLIElement
   {
     let li: HTMLLIElement = document.createElement("li");
-    li.classList.add("d-flex", "col-sm-6", "col-xl-4", "col-xs-12");
+    li.classList.add("d-flex");
+    li.classList.add("col-sm-6");
+    li.classList.add("col-xl-4");
+    li.classList.add("col-xs-12");
     let sp: HTMLSpanElement = document.createElement("span");
     sp.style.marginRight = "1em";
     sp.appendChild(document.createTextNode(title.replace("Commissioner of ", "").replace("Former", "")));
