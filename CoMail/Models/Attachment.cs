@@ -22,7 +22,7 @@ namespace CoMail.Models
         // connectionId=dbGuid
         // aid = attachment id (ie starts at 0)
         //MailArchiver/attachment.aspx?id=-2147457683&connectionId=6ebdf11b-3527-4423-8f93-b5928a27a303&aid=0
-        return $"/API/File?id={MailId}&Guid={Guid}&AttachmentId={AttachmentId}";
+        return $"API/File?id={MailId}&Guid={Guid}&AttachmentId={AttachmentId}";
       }
     }
     public Attachment()

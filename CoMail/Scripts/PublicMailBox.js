@@ -5,7 +5,7 @@ var CoMail;
         function PublicMailBox() {
         }
         PublicMailBox.prototype.Get = function () {
-            var x = XHR.Get("/API/MailBoxes");
+            var x = XHR.Get("API/MailBoxes");
             return new Promise(function (resolve, reject) {
                 x.then(function (response) {
                     var ar = JSON.parse(response.Text);

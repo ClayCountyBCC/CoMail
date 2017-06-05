@@ -70,7 +70,7 @@ var CoMail;
         function PublicMailBox() {
         }
         PublicMailBox.prototype.Get = function () {
-            var x = XHR.Get("/API/MailBoxes");
+            var x = XHR.Get("API/MailBoxes");
             return new Promise(function (resolve, reject) {
                 x.then(function (response) {
                     var ar = JSON.parse(response.Text);
@@ -228,7 +228,7 @@ var CoMail;
         Email.prototype.Constructor = function () {
         };
         Email.prototype.Get = function (EmailId) {
-            var x = XHR.Get("/API/Email/" + EmailId.toString());
+            var x = XHR.Get("API/Email/" + EmailId.toString());
             return new Promise(function (resolve, reject) {
                 x.then(function (response) {
                     var ar = JSON.parse(response.Text);
@@ -249,7 +249,7 @@ var CoMail;
                 arg = "?" + s;
             if (f.length > 0)
                 arg = arg.length === 0 ? "?" + f : arg + "&" + f;
-            var x = XHR.Get("/API/EmailList/" + lh.Mailbox + "/" + (lh.Page - 1) + "/" + arg);
+            var x = XHR.Get("API/EmailList/" + lh.Mailbox + "/" + (lh.Page - 1) + "/" + arg);
             return new Promise(function (resolve, reject) {
                 x.then(function (response) {
                     var ar = JSON.parse(response.Text);
@@ -267,10 +267,10 @@ var CoMail;
             var f = lh.From.length === 0 ? "" : "from=" + lh.From;
             var arg = "";
             if (s.length > 0)
-                arg = "?" + s;
+                arg = "&" + s;
             if (f.length > 0)
-                arg = arg.length === 0 ? "?" + f : arg + "&" + f;
-            var x = XHR.Get("/API/EmailCount/?mailbox=" + lh.Mailbox + arg);
+                arg = arg.length === 0 ? "&" + f : arg + "&" + f;
+            var x = XHR.Get("API/EmailCount/?mailbox=" + lh.Mailbox + arg);
             return new Promise(function (resolve, reject) {
                 x.then(function (response) {
                     var resp = JSON.parse(response.Text);

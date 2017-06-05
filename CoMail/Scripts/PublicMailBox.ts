@@ -20,7 +20,7 @@ namespace CoMail
     public MailboxName: string;
     Get(): Promise<Array<PublicMailBox>>
     {
-      var x = XHR.Get("/API/MailBoxes");
+      var x = XHR.Get("API/MailBoxes");
       return new Promise<Array<PublicMailBox>>(function (resolve, reject)
       {
         x.then(function (response)

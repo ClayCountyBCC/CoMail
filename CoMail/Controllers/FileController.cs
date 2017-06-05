@@ -20,8 +20,8 @@ namespace CoMail.Controllers
       string username = Constants.Get_ConnStr("Username");
       string password = Constants.Get_ConnStr("Password");
       string domain = Constants.Get_ConnStr("Domain");
-
-      string URL = $"http://claybccgfi01/MailArchiver/attachment.aspx?id={Id}&connectionId={Guid}&aid={AttachmentId}";
+      
+      string URL = $"http://10.200.42.18/MailArchiver/attachment.aspx?id={Id}&connectionId={Guid}&aid={AttachmentId}";
       using (var clientHandler = new HttpClientHandler
       {
         Credentials = new NetworkCredential(username, password, domain)

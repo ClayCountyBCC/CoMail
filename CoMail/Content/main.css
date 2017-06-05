@@ -43,7 +43,14 @@ html, body
   padding-bottom: .75em;
   font-size: larger;
 }
-
+#EmailTableFootin
+{
+  border-top: 1px solid rgba(0, 0, 0, 0.2);
+  background-color: #b0e0e6;
+  padding-top: .75em;
+  padding-bottom: .75em;
+  font-size: larger;
+}
 .page-link
 {
   background-color: none;
@@ -56,6 +63,7 @@ html, body
   border-left: 1px solid rgba(0, 0, 0, 0.2);
   border-right: 1px solid rgba(0, 0, 0, 0.2);
 }
+
 
 .EmailDataCell
 {

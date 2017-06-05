@@ -44,7 +44,7 @@ namespace CoMail
 
     public Get(EmailId:number): Promise<Email>
     {
-      var x = XHR.Get("/API/Email/" + EmailId.toString());
+      var x = XHR.Get("API/Email/" + EmailId.toString());
       return new Promise<Email>(function (resolve, reject)
       {
         x.then(function (response)
@@ -68,7 +68,7 @@ namespace CoMail
       let arg = "";
       if (s.length > 0) arg = "?" + s;
       if (f.length > 0) arg = arg.length === 0 ? "?" + f : arg + "&" + f;
-      var x = XHR.Get("/API/EmailList/" + lh.Mailbox + "/" + (lh.Page - 1) + "/" + arg);
+      var x = XHR.Get("API/EmailList/" + lh.Mailbox + "/" + (lh.Page - 1) + "/" + arg);
       return new Promise<Array<Email>>(function (resolve, reject)
       {
         x.then(function (response)
@@ -89,9 +89,9 @@ namespace CoMail
       let s = lh.Subject.length === 0 ? "" : "subject=" + lh.Subject;
       let f = lh.From.length === 0 ? "" : "from=" + lh.From;
       let arg = "";
-      if (s.length > 0) arg = "?" + s;
-      if (f.length > 0) arg = arg.length === 0 ? "?" + f : arg + "&" + f;
-      var x = XHR.Get("/API/EmailCount/?mailbox=" + lh.Mailbox + arg);
+      if (s.length > 0) arg = "&" + s;
+      if (f.length > 0) arg = arg.length === 0 ? "&" + f : arg + "&" + f;
+      var x = XHR.Get("API/EmailCount/?mailbox=" + lh.Mailbox + arg);
       return new Promise<number>(function (resolve, reject)
       {
         x.then(function (response)
