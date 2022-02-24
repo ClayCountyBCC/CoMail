@@ -95,10 +95,12 @@ var CoMail;
         for (var _i = 0, _a = CoMail.mailboxes; _i < _a.length; _i++) {
             var m = _a[_i];
             if (m.Active === 0) {
-                if (m.Title.indexOf("ommiss") !== -1) {
+                if (m.Title.indexOf("ommiss") !== -1) // they are a former commissioner
+                 {
                     former.appendChild(BuildMailboxItem(m.MailboxName, m.Name, m.Title));
                 }
-                else {
+                else // they are other than a commissioner
+                 {
                     other.appendChild(BuildMailboxItem(m.MailboxName, m.Name, m.Title));
                 }
             }
@@ -143,4 +145,4 @@ var CoMail;
     }
     CoMail.Hide = Hide;
 })(CoMail || (CoMail = {}));
-//# sourceMappingURL=ui.js.map
+//# sourceMappingURL=UI.js.map

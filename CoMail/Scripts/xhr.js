@@ -6,7 +6,7 @@
  */
 var XHR;
 (function (XHR) {
-    var Header = (function () {
+    var Header = /** @class */ (function () {
         function Header(header, data) {
             this.header = header;
             this.data = data;
@@ -14,7 +14,7 @@ var XHR;
         return Header;
     }());
     XHR.Header = Header;
-    var Data = (function () {
+    var Data = /** @class */ (function () {
         function Data() {
         }
         return Data;
@@ -98,4 +98,4 @@ var XHR;
     }
     XHR.Delete = Delete;
 })(XHR || (XHR = {}));
-//# sourceMappingURL=xhr.js.map
+//# sourceMappingURL=XHR.js.map

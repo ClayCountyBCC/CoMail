@@ -1,7 +1,7 @@
 var CoMail;
 (function (CoMail) {
     var LocationHash // implements ILocationHash
-     = (function () {
+     = /** @class */ (function () {
         function LocationHash(locationHash) {
             this.Mailbox = "";
             this.Page = 1;
@@ -62,11 +62,11 @@ var CoMail;
     }());
     CoMail.LocationHash = LocationHash;
 })(CoMail || (CoMail = {}));
-//# sourceMappingURL=locationhash.js.map
+//# sourceMappingURL=LocationHash.js.map
 /// <reference path="typings/es6-promise/es6-promise.d.ts" />
 var CoMail;
 (function (CoMail) {
-    var PublicMailBox = (function () {
+    var PublicMailBox = /** @class */ (function () {
         function PublicMailBox() {
         }
         PublicMailBox.prototype.Get = function () {
@@ -222,7 +222,7 @@ var CoMail;
 /// <reference path="typings/es6-promise/es6-promise.d.ts" />
 var CoMail;
 (function (CoMail) {
-    var Email = (function () {
+    var Email = /** @class */ (function () {
         function Email() {
         }
         Email.prototype.Constructor = function () {
@@ -300,7 +300,7 @@ var CoMail;
  */
 var XHR;
 (function (XHR) {
-    var Header = (function () {
+    var Header = /** @class */ (function () {
         function Header(header, data) {
             this.header = header;
             this.data = data;
@@ -308,7 +308,7 @@ var XHR;
         return Header;
     }());
     XHR.Header = Header;
-    var Data = (function () {
+    var Data = /** @class */ (function () {
         function Data() {
         }
         return Data;
@@ -392,7 +392,7 @@ var XHR;
     }
     XHR.Delete = Delete;
 })(XHR || (XHR = {}));
-//# sourceMappingURL=xhr.js.map
+//# sourceMappingURL=XHR.js.map
 var CoMail;
 (function (CoMail) {
     function BuildEmailView(e) {
@@ -490,10 +490,12 @@ var CoMail;
         for (var _i = 0, _a = CoMail.mailboxes; _i < _a.length; _i++) {
             var m = _a[_i];
             if (m.Active === 0) {
-                if (m.Title.indexOf("ommiss") !== -1) {
+                if (m.Title.indexOf("ommiss") !== -1) // they are a former commissioner
+                 {
                     former.appendChild(BuildMailboxItem(m.MailboxName, m.Name, m.Title));
                 }
-                else {
+                else // they are other than a commissioner
+                 {
                     other.appendChild(BuildMailboxItem(m.MailboxName, m.Name, m.Title));
                 }
             }
@@ -538,7 +540,7 @@ var CoMail;
     }
     CoMail.Hide = Hide;
 })(CoMail || (CoMail = {}));
-//# sourceMappingURL=ui.js.map
+//# sourceMappingURL=UI.js.map
 /// <reference path="locationhash.ts" />
 /// <reference path="xhr.ts" />
 /// <reference path="ui.ts" />

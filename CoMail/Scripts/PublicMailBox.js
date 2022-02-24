@@ -1,7 +1,7 @@
 /// <reference path="typings/es6-promise/es6-promise.d.ts" />
 var CoMail;
 (function (CoMail) {
-    var PublicMailBox = (function () {
+    var PublicMailBox = /** @class */ (function () {
         function PublicMailBox() {
         }
         PublicMailBox.prototype.Get = function () {

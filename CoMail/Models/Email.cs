@@ -85,7 +85,9 @@ namespace CoMail.Models
         FROM email E
         INNER JOIN emailMailboxLookup EML ON E.id = EML.emailId
         INNER JOIN person P ON P.id = EML.personId
-        WHERE P.id = @PersonId
+        WHERE 
+          E.ignore = 0 AND
+          P.id = @PersonId
           { sub }
           { frm }
         ORDER BY E.dateReceived DESC
@@ -120,7 +122,9 @@ namespace CoMail.Models
           body Body,
           attachmentCount AttachmentCount
         FROM email
-        WHERE id = @EmailId;";
+        WHERE 
+          ignore = 0 AND
+          id = @EmailId;";
       try
       {
         var el = Constants.Get_Data<Email>(query, dp, Constants.csMain);
@@ -177,7 +181,9 @@ namespace CoMail.Models
         FROM email E
         INNER JOIN emailMailboxLookup EML ON E.id = EML.emailId
         INNER JOIN person P ON P.id = EML.personId
-        WHERE P.id = @PersonId
+        WHERE 
+          E.ignore = 0 AND
+          P.id = @PersonId
           { sub }
           { frm }
         ORDER BY E.dateReceived DESC
@@ -220,7 +226,9 @@ namespace CoMail.Models
         FROM email E
         INNER JOIN emailMailboxLookup EML ON E.id = EML.emailId
         INNER JOIN person P ON P.id = EML.personId
-        WHERE P.id = @PersonId
+        WHERE 
+          E.ignore = 0 AND
+          P.id = @PersonId
           { sub }
           { frm };";
       try

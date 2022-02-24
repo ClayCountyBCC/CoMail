@@ -1,7 +1,7 @@
 var CoMail;
 (function (CoMail) {
     var LocationHash // implements ILocationHash
-     = (function () {
+     = /** @class */ (function () {
         function LocationHash(locationHash) {
             this.Mailbox = "";
             this.Page = 1;
@@ -62,4 +62,4 @@ var CoMail;
     }());
     CoMail.LocationHash = LocationHash;
 })(CoMail || (CoMail = {}));
-//# sourceMappingURL=locationhash.js.map
+//# sourceMappingURL=LocationHash.js.map

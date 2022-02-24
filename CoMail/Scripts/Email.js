@@ -1,7 +1,7 @@
 /// <reference path="typings/es6-promise/es6-promise.d.ts" />
 var CoMail;
 (function (CoMail) {
-    var Email = (function () {
+    var Email = /** @class */ (function () {
         function Email() {
         }
         Email.prototype.Constructor = function () {
