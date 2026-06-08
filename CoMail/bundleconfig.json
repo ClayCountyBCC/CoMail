@@ -12,11 +12,5 @@
       "Scripts/UI.js",
       "Scripts/app.js"
     ]
-  },
-  {
-    "outputFileName": "Content/site/theme.min.css",
-    "inputFiles": [
-      "Content/site/theme.css"
-    ]
   }
 ]
