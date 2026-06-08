@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.Web.Http;
-using CoMail.Models;
-using System.Runtime.Caching;
-using System.Threading;
+using CoMail.Infrastructure;
+
 namespace CoMail.Controllers
 {
   public class EmailListController : ApiController
@@ -18,60 +12,9 @@ namespace CoMail.Controllers
       int page = 0,
       string subject = "",
       string from = ""
-      ) 
+      )
     {
-
-      //Thread.Sleep(3000);
-      var pl = (List<PublicMailBox>)myCache.GetItem(
-        "mailboxes",
-        new CacheItemPolicy() { AbsoluteExpiration = DateTime.Now.AddHours(16) });
-
-      pl = (from p in pl
-            where p.MailboxName == mailbox
-            select p).ToList();
-      if (pl.Count == 1) // If we don't have exactly one record here, we have a problem.
-      {
-        var pId = pl.First().Id;
-        if (subject.Length == 0 && from.Length == 0)
-        {
-          var i = DateTime.Now.Minute * 60 + DateTime.Now.Second;
-          var CIP = new CacheItemPolicy()
-          {
-            // this will set the expiration to always expire at the top of the hour.
-            AbsoluteExpiration = DateTime.Now.AddSeconds(3600 - i)
-          };
-
-          var email = (List<Email>)myCache.GetItem(
-            "email," + pId.ToString() + "," + page.ToString(), CIP);
-
-          if (email != null)
-          {
-            return Ok(email);
-          }
-          else
-          {
-            return InternalServerError();
-          }
-        }
-        else
-        {
-          // If they include a subject or from, we want to do a raw query 
-          // and return 
-          var e = Email.GetShort(pId, page, subject, from);
-          if(e != null)
-          {
-            return Ok(e);
-          }
-          else
-          {
-            return InternalServerError();
-          }
-        }
-      }
-      else
-      {
-        return BadRequest();
-      }
+      return MailboxEmailService.GetListResponse(this, mailbox, page, subject, from);
     }
   }
 }

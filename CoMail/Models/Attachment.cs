@@ -1,8 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using Dapper;
+using CoMail.Infrastructure;
 
 namespace CoMail.Models
 {
@@ -46,15 +45,7 @@ namespace CoMail.Models
         INNER JOIN guidLookup G ON E.guidId = G.id
         WHERE A.emailId = @mId
         ORDER BY A.attId ASC";
-      try
-      {
-        return Constants.Get_Data<Attachment>(query, dp, Constants.csMain);
-      }
-      catch(Exception ex)
-      {
-        new ErrorLog(ex, query);
-        return null;
-      }
+      return Database.Query<Attachment>(query, dp);
     }
   }
 }

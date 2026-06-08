@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Web.Http;
 
 namespace CoMail
@@ -38,10 +36,6 @@ namespace CoMail
           from = RouteParameter.Optional
         }
         );
-      config.Routes.MapHttpRoute(
-        name: "FileApi",
-        routeTemplate: "api/{controller}/id/Guid/AttachmentId",
-        defaults: new { });
 
     }
   }

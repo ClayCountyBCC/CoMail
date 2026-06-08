@@ -2,19 +2,21 @@
   {
     "outputFileName": "Scripts/bundle.js",
     "inputFiles": [
-      "Scripts/locationhash.js",
+      "Scripts/LocationHash.js",
+      "Scripts/Configuration/AppConstants.js",
       "Scripts/PublicMailBox.js",
       "scripts/es6-promise.min.js",
       "Scripts/Email.js",
       "Scripts/xhr.js",
-      "Scripts/ui.js",
+      "Scripts/Accessibility/EmailModal.js",
+      "Scripts/UI.js",
       "Scripts/app.js"
     ]
   },
   {
-    "outputFileName": "Content/main.min.css",
+    "outputFileName": "Content/site/theme.min.css",
     "inputFiles": [
-      "Content/main.css"
+      "Content/site/theme.css"
     ]
   }
 ]
