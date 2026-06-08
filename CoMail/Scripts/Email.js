@@ -1,73 +1,79 @@
-/// <reference path="typings/es6-promise/es6-promise.d.ts" />
 var CoMail;
 (function (CoMail) {
-    var Email = /** @class */ (function () {
-        function Email() {
+    function Email() {
+    }
+
+    Email.prototype.Get = function (emailId) {
+        var request = XHR.Get("API/Email/" + emailId.toString());
+
+        return new Promise(function (resolve, reject) {
+            request.then(function (response) {
+                resolve(JSON.parse(response.Text));
+            }).catch(function () {
+                console.log("error in Get Email");
+                reject(null);
+            });
+        });
+    };
+
+    Email.prototype.GetList = function (lh) {
+        if (!this.CheckMailbox(lh.Mailbox)) {
+            return Promise.reject(new Error("Invalid mailbox"));
         }
-        Email.prototype.Constructor = function () {
-        };
-        Email.prototype.Get = function (EmailId) {
-            var x = XHR.Get("API/Email/" + EmailId.toString());
-            return new Promise(function (resolve, reject) {
-                x.then(function (response) {
-                    var ar = JSON.parse(response.Text);
-                    return resolve(ar);
-                }).catch(function () {
-                    console.log("error in Get Email");
-                    return reject(null);
-                });
+
+        var query = buildSearchQuery(lh);
+        var page = Math.max(lh.Page - 1, 0);
+        var url = "API/EmailList/" + encodeURIComponent(lh.Mailbox) + "/" + page.toString() + "/" + (query.length > 0 ? "?" + query : "");
+        var request = XHR.Get(url);
+
+        return new Promise(function (resolve, reject) {
+            request.then(function (response) {
+                resolve(JSON.parse(response.Text));
+            }).catch(function () {
+                console.log("error in Get EmailList");
+                reject(null);
             });
-        };
-        Email.prototype.GetList = function (lh) {
-            if (!this.CheckMailbox(lh.Mailbox))
-                return;
-            var s = lh.Subject.length === 0 ? "" : "subject=" + lh.Subject;
-            var f = lh.From.length === 0 ? "" : "from=" + lh.From;
-            var arg = "";
-            if (s.length > 0)
-                arg = "?" + s;
-            if (f.length > 0)
-                arg = arg.length === 0 ? "?" + f : arg + "&" + f;
-            var x = XHR.Get("API/EmailList/" + lh.Mailbox + "/" + (lh.Page - 1) + "/" + arg);
-            return new Promise(function (resolve, reject) {
-                x.then(function (response) {
-                    var ar = JSON.parse(response.Text);
-                    return resolve(ar);
-                }).catch(function () {
-                    console.log("error in Get EmailList");
-                    return reject(null);
-                });
+        });
+    };
+
+    Email.prototype.GetCount = function (lh) {
+        if (!this.CheckMailbox(lh.Mailbox)) {
+            return Promise.reject(new Error("Invalid mailbox"));
+        }
+
+        var query = buildSearchQuery(lh);
+        var url = "API/EmailCount/?mailbox=" + encodeURIComponent(lh.Mailbox) + (query.length > 0 ? "&" + query : "");
+        var request = XHR.Get(url);
+
+        return new Promise(function (resolve, reject) {
+            request.then(function (response) {
+                resolve(JSON.parse(response.Text));
+            }).catch(function () {
+                console.log("error in Get EmailCount");
+                reject(null);
             });
-        };
-        Email.prototype.GetCount = function (lh) {
-            if (!this.CheckMailbox(lh.Mailbox))
-                return;
-            var s = lh.Subject.length === 0 ? "" : "subject=" + lh.Subject;
-            var f = lh.From.length === 0 ? "" : "from=" + lh.From;
-            var arg = "";
-            if (s.length > 0)
-                arg = "&" + s;
-            if (f.length > 0)
-                arg = arg.length === 0 ? "&" + f : arg + "&" + f;
-            var x = XHR.Get("API/EmailCount/?mailbox=" + lh.Mailbox + arg);
-            return new Promise(function (resolve, reject) {
-                x.then(function (response) {
-                    var resp = JSON.parse(response.Text);
-                    return resolve(resp);
-                }).catch(function () {
-                    console.log("error in Get EmailCount");
-                    return reject(null);
-                });
-            });
-        };
-        Email.prototype.CheckMailbox = function (MailboxName) {
-            var k = CoMail.mailboxes.filter(function (m) {
-                return m.MailboxName === MailboxName;
-            });
-            return k.length === 1;
-        };
-        return Email;
-    }());
+        });
+    };
+
+    Email.prototype.CheckMailbox = function (mailboxName) {
+        return CoMail.mailboxes.some(function (m) {
+            return m.MailboxName === mailboxName;
+        });
+    };
+
+    function buildSearchQuery(lh) {
+        var query = [];
+
+        if (lh.Subject.length > 0) {
+            query.push("subject=" + encodeURIComponent(lh.Subject));
+        }
+
+        if (lh.From.length > 0) {
+            query.push("from=" + encodeURIComponent(lh.From));
+        }
+
+        return query.join("&");
+    }
+
     CoMail.Email = Email;
 })(CoMail || (CoMail = {}));
-//# sourceMappingURL=Email.js.map

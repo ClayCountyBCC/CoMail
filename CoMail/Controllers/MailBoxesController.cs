@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
+using System;
 using System.Web.Http;
+using CoMail.Infrastructure;
 using CoMail.Models;
-using System.Runtime.Caching;
-using System.Threading;
 
 namespace CoMail.Controllers
 {
@@ -15,20 +10,17 @@ namespace CoMail.Controllers
     // GET: api/MailBoxes
     public IHttpActionResult Get()
     {
-      var CIP = new CacheItemPolicy()
-      {
-        AbsoluteExpiration = DateTime.Now.AddHours(16)
-      };
-      //Thread.Sleep(3000);
-      var mailboxes = (List<PublicMailBox>)myCache.GetItem("mailboxes", CIP);
-      if (mailboxes != null)
-      {
-        return Ok(mailboxes);
-      }
-      else
+      var mailboxes = CacheStore.GetOrAdd(
+        "mailboxes",
+        PublicMailBox.Get,
+        CacheStore.CreateAbsoluteExpirationPolicy(TimeSpan.FromHours(16)));
+
+      if (mailboxes == null)
       {
         return InternalServerError();
       }
+
+      return Ok(mailboxes);
     }
   }
 }

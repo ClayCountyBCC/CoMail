@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using Dapper;
 using System.Data;
 using System.Data.SqlClient;
+using CoMail.Infrastructure;
 
 namespace CoMail.Models
 {
@@ -51,9 +49,16 @@ namespace CoMail.Models
           VALUES (@applicationName, @errorText, @errorMessage,
             @errorStacktrace, @errorSource, @query);";
 
-      using (IDbConnection db = new SqlConnection(Constants.Get_ConnStr(Constants.csError)))
+      try
       {
-        db.Execute(sql, this);
+        using (IDbConnection db = new SqlConnection(Database.GetConnectionString(Database.LogConnectionName)))
+        {
+          db.Execute(sql, this);
+        }
+      }
+      catch
+      {
+        // If the error log database is unavailable, do not throw from logging.
       }
     }
   }

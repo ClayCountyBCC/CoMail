@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <title>Clay County Public Records - Maintenance</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Clay County Public Records is temporarily unavailable for maintenance." />
+  <link rel="icon" href="Content/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css" />
+  <link rel="stylesheet" href="Content/site/theme.min.css?v2.5.1.3552" />
+</head>
+<body class="site-body">
+  <main id="main-content" class="section site-main" tabindex="-1">
+    <div class="container is-max-desktop">
+      <section class="site-panel has-text-centered" aria-labelledby="MaintenanceHeading">
+        <p class="eyebrow">Service status</p>
+        <h1 id="MaintenanceHeading" class="title is-2">Site Undergoing Maintenance</h1>
+        <p id="MaintenanceMessage" class="subtitle is-5">
+          The site is temporarily unavailable while updates are being applied.
+        </p>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var request = new XMLHttpRequest();
+      request.open("GET", "API/SiteState", true);
+      request.setRequestHeader("Accept", "application/json");
+      request.onload = function () {
+        if (request.status < 200 || request.status >= 300 || !request.responseText) {
+          return;
+        }
+
+        try {
+          var siteState = JSON.parse(request.responseText);
+          if (siteState &&
+            typeof siteState.MaintenanceMessage === "string" &&
+            siteState.MaintenanceMessage.trim().length > 0) {
+            var message = document.getElementById("MaintenanceMessage");
+            if (message !== null) {
+              message.textContent = siteState.MaintenanceMessage;
+            }
+          }
+        }
+        catch (error) {
+          // Keep the generic message if the state endpoint cannot be parsed.
+        }
+      };
+      request.send();
+    });
+  </script>
+</body>
+</html>

@@ -1,91 +1,125 @@
 var CoMail;
 (function (CoMail) {
-    var LocationHash // implements ILocationHash
-     = /** @class */ (function () {
-        function LocationHash(locationHash) {
-            this.Mailbox = "";
-            this.Page = 1;
-            this.EmailId = -1;
-            this.Subject = "";
-            this.From = "";
-            var ha = locationHash.split("&");
-            for (var i = 0; i < ha.length; i++) {
-                var k = ha[i].split("=");
-                switch (k[0].toLowerCase()) {
-                    case "mailbox":
-                        this.Mailbox = k[1];
-                        break;
-                    case "page":
-                        this.Page = parseInt(k[1]);
-                        break;
-                    case "emailid":
-                        this.EmailId = parseInt(k[1]);
-                        break;
-                    case "from":
-                        this.From = k[1];
-                        break;
-                    case "subject":
-                        this.Subject = k[1];
-                }
+    function LocationHash(locationHash) {
+        this.Mailbox = "";
+        this.Page = 1;
+        this.EmailId = -1;
+        this.Subject = "";
+        this.From = "";
+        this.Section = "county";
+
+        var segments = locationHash.split("&");
+        for (var i = 0; i < segments.length; i++) {
+            var parts = segments[i].split("=");
+            switch (parts[0].toLowerCase()) {
+                case "mailbox":
+                    this.Mailbox = decodeValue(parts);
+                    break;
+                case "page":
+                    this.Page = parseInt(parts[1], 10);
+                    break;
+                case "emailid":
+                    this.EmailId = parseInt(parts[1], 10);
+                    break;
+                case "from":
+                    this.From = decodeValue(parts);
+                    break;
+                case "subject":
+                    this.Subject = decodeValue(parts);
+                    break;
+                case "section":
+                    this.Section = normalizeSection(decodeValue(parts));
+                    break;
             }
         }
-        LocationHash.prototype.AddEmailId = function (EmailId) {
-            // and using its current properties, going to emit an updated hash
-            // with a new EmailId.
-            var h = "";
-            if (this.Mailbox.length > 0)
-                h += "&mailbox=" + this.Mailbox;
-            if (this.Page > -1)
-                h += "&page=" + this.Page.toString();
-            if (this.Subject.length > 0)
-                h += "&subject=" + this.Subject;
-            if (this.From.length > 0)
-                h += "&from=" + this.From;
-            h += "&emailid=" + EmailId.toString();
-            return h.substring(1);
-        };
-        LocationHash.prototype.RemoveEmailId = function () {
-            // and using its current properties, going to emit an updated hash
-            // with a new EmailId.
-            var h = "";
-            if (this.Mailbox.length > 0)
-                h += "&mailbox=" + this.Mailbox;
-            if (this.Page > -1)
-                h += "&page=" + this.Page.toString();
-            if (this.Subject.length > 0)
-                h += "&subject=" + this.Subject;
-            if (this.From.length > 0)
-                h += "&from=" + this.From;
-            return h.substring(1);
-        };
-        return LocationHash;
-    }());
+    }
+
+    LocationHash.prototype.AddEmailId = function (emailId) {
+        var hash = "";
+        if (this.Section.length > 0) {
+            hash += "&section=" + encodeURIComponent(this.Section);
+        }
+        if (this.Mailbox.length > 0) {
+            hash += "&mailbox=" + encodeURIComponent(this.Mailbox);
+        }
+        if (this.Page > -1) {
+            hash += "&page=" + this.Page.toString();
+        }
+        if (this.Subject.length > 0) {
+            hash += "&subject=" + encodeURIComponent(this.Subject);
+        }
+        if (this.From.length > 0) {
+            hash += "&from=" + encodeURIComponent(this.From);
+        }
+        hash += "&emailid=" + emailId.toString();
+        return hash.substring(1);
+    };
+
+    LocationHash.prototype.RemoveEmailId = function () {
+        var hash = "";
+        if (this.Section.length > 0) {
+            hash += "&section=" + encodeURIComponent(this.Section);
+        }
+        if (this.Mailbox.length > 0) {
+            hash += "&mailbox=" + encodeURIComponent(this.Mailbox);
+        }
+        if (this.Page > -1) {
+            hash += "&page=" + this.Page.toString();
+        }
+        if (this.Subject.length > 0) {
+            hash += "&subject=" + encodeURIComponent(this.Subject);
+        }
+        if (this.From.length > 0) {
+            hash += "&from=" + encodeURIComponent(this.From);
+        }
+        return hash.substring(1);
+    };
+
+    LocationHash.prototype.ToSectionHash = function () {
+        return "section=" + encodeURIComponent(this.Section);
+    };
+
+    function decodeValue(parts) {
+        if (parts.length < 2) {
+            return "";
+        }
+
+        return decodeURIComponent(parts[1]);
+    }
+
+    function normalizeSection(section) {
+        return (section || "").toLowerCase() === "former" ? "former" : "county";
+    }
+
     CoMail.LocationHash = LocationHash;
 })(CoMail || (CoMail = {}));
-//# sourceMappingURL=LocationHash.js.map
-/// <reference path="typings/es6-promise/es6-promise.d.ts" />
+
 var CoMail;
 (function (CoMail) {
-    var PublicMailBox = /** @class */ (function () {
-        function PublicMailBox() {
-        }
-        PublicMailBox.prototype.Get = function () {
-            var x = XHR.Get("API/MailBoxes");
-            return new Promise(function (resolve, reject) {
-                x.then(function (response) {
-                    var ar = JSON.parse(response.Text);
-                    return resolve(ar);
-                }).catch(function () {
-                    console.log("error in GetMailBoxes");
-                    return reject(null);
-                });
+    CoMail.PageSize = 20;
+})(CoMail || (CoMail = {}));
+
+var CoMail;
+(function (CoMail) {
+    function PublicMailBox() {
+    }
+
+    PublicMailBox.prototype.Get = function () {
+        var request = XHR.Get("API/MailBoxes");
+
+        return new Promise(function (resolve, reject) {
+            request.then(function (response) {
+                resolve(JSON.parse(response.Text));
+            }).catch(function () {
+                console.log("error in GetMailBoxes");
+                reject(null);
             });
-        };
-        return PublicMailBox;
-    }());
+        });
+    };
+
     CoMail.PublicMailBox = PublicMailBox;
 })(CoMail || (CoMail = {}));
-//# sourceMappingURL=PublicMailBox.js.map
+
 /*!
  * @overview es6-promise - a tiny implementation of Promises/A+.
  * @copyright Copyright (c) 2014 Yehuda Katz, Tom Dale, Stefan Penner and contributors (Conversion to ES6 API by Jake Archibald)
@@ -219,79 +253,86 @@ var CoMail;
     "function" == typeof define && define.amd ? define(function () { return vt; }) : "undefined" != typeof module && module.exports ? module.exports = vt : "undefined" != typeof this && (this.ES6Promise = vt), dt();
 }).call(this);
 //# sourceMappingURL=es6-promise.min.js.map
-/// <reference path="typings/es6-promise/es6-promise.d.ts" />
 var CoMail;
 (function (CoMail) {
-    var Email = /** @class */ (function () {
-        function Email() {
+    function Email() {
+    }
+
+    Email.prototype.Get = function (emailId) {
+        var request = XHR.Get("API/Email/" + emailId.toString());
+
+        return new Promise(function (resolve, reject) {
+            request.then(function (response) {
+                resolve(JSON.parse(response.Text));
+            }).catch(function () {
+                console.log("error in Get Email");
+                reject(null);
+            });
+        });
+    };
+
+    Email.prototype.GetList = function (lh) {
+        if (!this.CheckMailbox(lh.Mailbox)) {
+            return Promise.reject(new Error("Invalid mailbox"));
         }
-        Email.prototype.Constructor = function () {
-        };
-        Email.prototype.Get = function (EmailId) {
-            var x = XHR.Get("API/Email/" + EmailId.toString());
-            return new Promise(function (resolve, reject) {
-                x.then(function (response) {
-                    var ar = JSON.parse(response.Text);
-                    return resolve(ar);
-                }).catch(function () {
-                    console.log("error in Get Email");
-                    return reject(null);
-                });
+
+        var query = buildSearchQuery(lh);
+        var page = Math.max(lh.Page - 1, 0);
+        var url = "API/EmailList/" + encodeURIComponent(lh.Mailbox) + "/" + page.toString() + "/" + (query.length > 0 ? "?" + query : "");
+        var request = XHR.Get(url);
+
+        return new Promise(function (resolve, reject) {
+            request.then(function (response) {
+                resolve(JSON.parse(response.Text));
+            }).catch(function () {
+                console.log("error in Get EmailList");
+                reject(null);
             });
-        };
-        Email.prototype.GetList = function (lh) {
-            if (!this.CheckMailbox(lh.Mailbox))
-                return;
-            var s = lh.Subject.length === 0 ? "" : "subject=" + lh.Subject;
-            var f = lh.From.length === 0 ? "" : "from=" + lh.From;
-            var arg = "";
-            if (s.length > 0)
-                arg = "?" + s;
-            if (f.length > 0)
-                arg = arg.length === 0 ? "?" + f : arg + "&" + f;
-            var x = XHR.Get("API/EmailList/" + lh.Mailbox + "/" + (lh.Page - 1) + "/" + arg);
-            return new Promise(function (resolve, reject) {
-                x.then(function (response) {
-                    var ar = JSON.parse(response.Text);
-                    return resolve(ar);
-                }).catch(function () {
-                    console.log("error in Get EmailList");
-                    return reject(null);
-                });
+        });
+    };
+
+    Email.prototype.GetCount = function (lh) {
+        if (!this.CheckMailbox(lh.Mailbox)) {
+            return Promise.reject(new Error("Invalid mailbox"));
+        }
+
+        var query = buildSearchQuery(lh);
+        var url = "API/EmailCount/?mailbox=" + encodeURIComponent(lh.Mailbox) + (query.length > 0 ? "&" + query : "");
+        var request = XHR.Get(url);
+
+        return new Promise(function (resolve, reject) {
+            request.then(function (response) {
+                resolve(JSON.parse(response.Text));
+            }).catch(function () {
+                console.log("error in Get EmailCount");
+                reject(null);
             });
-        };
-        Email.prototype.GetCount = function (lh) {
-            if (!this.CheckMailbox(lh.Mailbox))
-                return;
-            var s = lh.Subject.length === 0 ? "" : "subject=" + lh.Subject;
-            var f = lh.From.length === 0 ? "" : "from=" + lh.From;
-            var arg = "";
-            if (s.length > 0)
-                arg = "&" + s;
-            if (f.length > 0)
-                arg = arg.length === 0 ? "&" + f : arg + "&" + f;
-            var x = XHR.Get("API/EmailCount/?mailbox=" + lh.Mailbox + arg);
-            return new Promise(function (resolve, reject) {
-                x.then(function (response) {
-                    var resp = JSON.parse(response.Text);
-                    return resolve(resp);
-                }).catch(function () {
-                    console.log("error in Get EmailCount");
-                    return reject(null);
-                });
-            });
-        };
-        Email.prototype.CheckMailbox = function (MailboxName) {
-            var k = CoMail.mailboxes.filter(function (m) {
-                return m.MailboxName === MailboxName;
-            });
-            return k.length === 1;
-        };
-        return Email;
-    }());
+        });
+    };
+
+    Email.prototype.CheckMailbox = function (mailboxName) {
+        return CoMail.mailboxes.some(function (m) {
+            return m.MailboxName === mailboxName;
+        });
+    };
+
+    function buildSearchQuery(lh) {
+        var query = [];
+
+        if (lh.Subject.length > 0) {
+            query.push("subject=" + encodeURIComponent(lh.Subject));
+        }
+
+        if (lh.From.length > 0) {
+            query.push("from=" + encodeURIComponent(lh.From));
+        }
+
+        return query.join("&");
+    }
+
     CoMail.Email = Email;
 })(CoMail || (CoMail = {}));
-//# sourceMappingURL=Email.js.map
+
 /// <reference path="typings/es6-promise/es6-promise.d.ts" />
 /*  This code was written by macromaniac
  *  Originally pulled from: https://gist.github.com/macromaniac/e62ed27781842b6c8611 on 7/14/2016
@@ -395,276 +436,1104 @@ var XHR;
 //# sourceMappingURL=XHR.js.map
 var CoMail;
 (function (CoMail) {
+    var emailModalRoot = null;
+    var restoreFocusTo = null;
+    var closeRequestHandler = null;
+    var initialized = false;
+
+    function InitializeEmailModal(onCloseRequest) {
+        closeRequestHandler = onCloseRequest;
+        emailModalRoot = document.getElementById("EmailView");
+
+        if (initialized || emailModalRoot === null) {
+            return;
+        }
+
+        var closeTargets = emailModalRoot.querySelectorAll("[data-email-modal-close]");
+        for (var i = 0; i < closeTargets.length; i++) {
+            closeTargets[i].addEventListener("click", handleCloseRequest);
+        }
+
+        emailModalRoot.addEventListener("keydown", handleKeyDown);
+        emailModalRoot.setAttribute("aria-hidden", "true");
+        initialized = true;
+    }
+
+    function OpenEmailModal() {
+        if (emailModalRoot === null) {
+            InitializeEmailModal(closeRequestHandler);
+        }
+
+        if (emailModalRoot === null) {
+            return;
+        }
+
+        var activeElement = document.activeElement;
+        restoreFocusTo = activeElement instanceof HTMLElement ? activeElement : null;
+
+        resetScrollPosition();
+
+        emailModalRoot.classList.add("is-active");
+        emailModalRoot.setAttribute("aria-hidden", "false");
+        document.documentElement.classList.add("is-clipped");
+        resetScrollPosition();
+        scheduleScrollReset();
+
+        var focusTarget = emailModalRoot.querySelector("[data-email-modal-initial-focus]");
+        if (focusTarget === null) {
+            focusTarget = getFocusableElements(emailModalRoot)[0];
+        }
+
+        if (focusTarget !== undefined && focusTarget !== null) {
+            if (typeof focusTarget.focus === "function") {
+                try {
+                    focusTarget.focus({ preventScroll: true });
+                }
+                catch (err) {
+                    focusTarget.focus();
+                }
+            }
+        }
+    }
+
+    function CloseEmailModal() {
+        if (emailModalRoot === null) {
+            return;
+        }
+
+        emailModalRoot.classList.remove("is-active");
+        emailModalRoot.setAttribute("aria-hidden", "true");
+        document.documentElement.classList.remove("is-clipped");
+        resetScrollPosition();
+        scheduleScrollReset();
+
+        if (restoreFocusTo !== null && typeof restoreFocusTo.focus === "function") {
+            restoreFocusTo.focus();
+        }
+
+        restoreFocusTo = null;
+    }
+
+    function handleCloseRequest(evt) {
+        evt.preventDefault();
+        requestClose(evt);
+    }
+
+    function handleKeyDown(evt) {
+        if (emailModalRoot === null || !emailModalRoot.classList.contains("is-active")) {
+            return;
+        }
+
+        if (evt.key === "Escape") {
+            evt.preventDefault();
+            requestClose(evt);
+            return;
+        }
+
+        if (evt.key !== "Tab") {
+            return;
+        }
+
+        var focusable = getFocusableElements(emailModalRoot);
+        if (focusable.length === 0) {
+            return;
+        }
+
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        var active = document.activeElement;
+
+        if (evt.shiftKey) {
+            if (active === first) {
+                evt.preventDefault();
+                last.focus();
+            }
+        }
+        else if (active === last) {
+            evt.preventDefault();
+            first.focus();
+        }
+    }
+
+    function requestClose(evt) {
+        if (closeRequestHandler !== null) {
+            closeRequestHandler(evt);
+            return;
+        }
+
+        CloseEmailModal();
+    }
+
+    function getFocusableElements(root) {
+        var selectors = "a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex='-1'])";
+        var elements = root.querySelectorAll(selectors);
+        var result = [];
+
+        for (var i = 0; i < elements.length; i++) {
+            var element = elements.item(i);
+            if (element !== null) {
+                result.push(element);
+            }
+        }
+
+        return result;
+    }
+
+    function resetScrollPosition() {
+        if (emailModalRoot === null) {
+            return;
+        }
+
+        emailModalRoot.scrollTop = 0;
+
+        var modalBody = emailModalRoot.querySelector(".modal-card-body");
+        if (modalBody !== null) {
+            modalBody.scrollTop = 0;
+
+            var emailMessage = modalBody.querySelector(".email-message");
+            if (emailMessage !== null) {
+                emailMessage.scrollTop = 0;
+            }
+        }
+    }
+
+    function scheduleScrollReset() {
+        if (typeof window.requestAnimationFrame === "function") {
+            window.requestAnimationFrame(function () {
+                resetScrollPosition();
+            });
+            return;
+        }
+
+        setTimeout(resetScrollPosition, 0);
+    }
+
+    CoMail.InitializeEmailModal = InitializeEmailModal;
+    CoMail.OpenEmailModal = OpenEmailModal;
+    CoMail.CloseEmailModal = CloseEmailModal;
+})(CoMail || (CoMail = {}));
+
+var CoMail;
+(function (CoMail) {
     function BuildEmailView(e) {
         SetValue("EmailSubject", e.Subject);
         SetValue("EmailDateReceived", e.DateReceived_ToString);
         SetValue("EmailFrom", e.From);
         SetValue("EmailTo", e.To);
         SetValue("EmailCc", e.CC);
-        var parser = new DOMParser();
-        var d = parser.parseFromString(e.Body, "text/html");
-        var EmailMessage = document.getElementById("EmailMessage");
-        clearElement(EmailMessage);
-        EmailMessage.appendChild(d.documentElement);
-        AddAttachments(e.Attachments);
+
+        var emailMessage = document.getElementById("EmailMessage");
+        if (emailMessage !== null) {
+            clearElement(emailMessage);
+
+            var bodyWrapper = document.createElement("div");
+            bodyWrapper.classList.add("email-body");
+
+            var parser = new DOMParser();
+            var parsed = parser.parseFromString(e.Body || "", "text/html");
+            var html = parsed.body !== null && parsed.body.innerHTML.length > 0 ? parsed.body.innerHTML : (e.Body || "");
+            bodyWrapper.innerHTML = html;
+
+            emailMessage.appendChild(bodyWrapper);
+        }
+
+        AddAttachments(e.Attachments || []);
     }
     CoMail.BuildEmailView = BuildEmailView;
+
     function AddAttachments(attachments) {
-        var EA = document.getElementById("EmailAttachments");
-        clearElement(EA);
-        for (var _i = 0, attachments_1 = attachments; _i < attachments_1.length; _i++) {
-            var a = attachments_1[_i];
-            var k = document.createElement("a");
-            k.style.marginRight = "1em";
-            k.href = a.URL;
-            k.appendChild(document.createTextNode(a.Filename));
-            EA.appendChild(k);
+        var attachmentContainer = document.getElementById("EmailAttachments");
+        if (attachmentContainer === null) {
+            return;
         }
+
+        clearElement(attachmentContainer);
+
+        if (attachments.length === 0) {
+            var none = document.createElement("span");
+            none.classList.add("has-text-grey");
+            none.textContent = "None";
+            attachmentContainer.appendChild(none);
+            return;
+        }
+
+        var tags = document.createElement("div");
+        tags.classList.add("tags");
+
+        for (var i = 0; i < attachments.length; i++) {
+            var a = attachments[i];
+            var tag = document.createElement("a");
+            tag.classList.add("tag", "is-link", "is-light", "attachment-tag");
+            tag.href = a.URL;
+            tag.setAttribute("aria-label", "Open attachment " + a.Filename);
+
+            var icon = document.createElement("span");
+            icon.classList.add("icon", "is-small");
+            icon.setAttribute("aria-hidden", "true");
+            icon.appendChild(CreatePaperclipIcon());
+
+            var label = document.createElement("span");
+            label.textContent = a.Filename;
+
+            tag.appendChild(icon);
+            tag.appendChild(label);
+            tags.appendChild(tag);
+        }
+
+        attachmentContainer.appendChild(tags);
     }
+
     function SetValue(id, value) {
         var e = document.getElementById(id);
-        clearElement(e);
-        e.appendChild(document.createTextNode(value));
-    }
-    function UpdateMailboxName(MailboxName) {
-        var k = CoMail.mailboxes.filter(function (m) {
-            return m.MailboxName === MailboxName;
-        });
-        var mbn = document.getElementById("MailboxName");
-        clearElement(mbn);
-        if (k.length === 1) {
-            mbn.appendChild(document.createTextNode(k[0].Name));
+        if (e === null) {
+            return;
         }
+
+        e.textContent = value || "";
+    }
+
+    function UpdateMailboxName(mailboxName) {
+        var mailbox = CoMail.mailboxes.filter(function (m) {
+            return m.MailboxName === mailboxName;
+        });
+
+        var mailboxNameElement = document.getElementById("MailboxName");
+        if (mailboxNameElement === null) {
+            return;
+        }
+
+        mailboxNameElement.textContent = mailbox.length === 1 ? mailbox[0].Name : "";
     }
     CoMail.UpdateMailboxName = UpdateMailboxName;
+
     function ClearEmailList() {
         var emailList = document.getElementById("EmailList");
+        if (emailList === null) {
+            return null;
+        }
+
         clearElement(emailList);
         return emailList;
     }
     CoMail.ClearEmailList = ClearEmailList;
+
     function BuildEmailList() {
         var emailList = ClearEmailList();
-        var df = document.createDocumentFragment();
-        for (var _i = 0, currentEmailList_1 = CoMail.currentEmailList; _i < currentEmailList_1.length; _i++) {
-            var email = currentEmailList_1[_i];
-            var edr = document.createElement("div");
-            edr.classList.add("d-flex");
-            edr.classList.add("col-12");
-            edr.classList.add("flex-row");
-            edr.classList.add("EmailDataRow");
-            edr.classList.add("flex-wrap"); //collapse
-            var daterec = CreateEmailListElement("3", email.DateReceived_ToString);
-            edr.appendChild(daterec);
-            var from = CreateEmailListElement("3", email.From);
-            edr.appendChild(from);
-            var subject = CreateEmailListElement("4", email.Subject);
-            edr.appendChild(subject);
-            var view = CreateEmailListElement("2", "");
-            view.classList.add("CenterButton");
-            var viewButton = document.createElement("a");
-            viewButton.href = "#" + CoMail.currentHash.AddEmailId(email.Id);
-            viewButton.classList.add("btn");
-            viewButton.classList.add("btn-info");
-            viewButton.classList.add("MyInfoButton");
-            viewButton.appendChild(document.createTextNode("View"));
-            view.appendChild(viewButton);
-            edr.appendChild(view);
-            df.appendChild(edr);
+        if (emailList === null) {
+            return;
         }
-        emailList.appendChild(df);
+
+        var fragment = document.createDocumentFragment();
+
+        for (var i = 0; i < CoMail.currentEmailList.length; i++) {
+            var email = CoMail.currentEmailList[i];
+            var emailHref = CoMail.currentHash === null ? "#" : "#" + CoMail.currentHash.AddEmailId(email.Id);
+
+            var row = document.createElement("tr");
+            row.classList.add("email-row", "email-row--clickable");
+            row.addEventListener("click", CreateEmailRowClickHandler(emailHref));
+
+            row.appendChild(CreateEmailDateCell(email.DateReceived_ToString, email.DateReceived_DateOnlyString));
+            row.appendChild(CreateEmailListCell("email-from-cell", email.From));
+
+            var subjectCell = CreateEmailListCell("email-subject-cell", email.Subject);
+            subjectCell.title = email.Subject;
+            row.appendChild(subjectCell);
+
+            var actionCell = CreateEmailListCell("email-action-cell", "");
+            actionCell.classList.add("has-text-centered");
+
+            var viewButton = document.createElement("a");
+            viewButton.classList.add("button", "is-link", "is-light", "is-small", "email-view-button");
+            viewButton.href = emailHref;
+            viewButton.setAttribute("aria-label", "View email: " + email.Subject);
+
+            var buttonIcon = document.createElement("span");
+            buttonIcon.classList.add("icon", "is-small");
+            buttonIcon.setAttribute("aria-hidden", "true");
+            buttonIcon.appendChild(CreateEnvelopeIcon());
+
+            var buttonLabel = document.createElement("span");
+            buttonLabel.textContent = "View";
+
+            viewButton.appendChild(buttonIcon);
+            viewButton.appendChild(buttonLabel);
+            actionCell.appendChild(viewButton);
+            row.appendChild(actionCell);
+            fragment.appendChild(row);
+        }
+
+        emailList.appendChild(fragment);
     }
     CoMail.BuildEmailList = BuildEmailList;
-    function CreateEmailListElement(size, text) {
-        var e = document.createElement("div");
-        e.classList.add("col-" + size);
-        e.classList.add("EmailDataCell");
-        if (text.length > 0)
-            e.appendChild(document.createTextNode(text));
-        return e;
+
+    function CreateEmailDateCell(fullText, mobileText) {
+        var cell = document.createElement("td");
+        cell.classList.add("email-date-cell");
+        cell.title = fullText || mobileText || "";
+
+        var desktopValue = document.createElement("span");
+        desktopValue.classList.add("email-date-cell__full");
+        desktopValue.textContent = fullText || "";
+
+        var mobileValue = document.createElement("span");
+        mobileValue.classList.add("email-date-cell__short");
+        mobileValue.textContent = mobileText || fullText || "";
+
+        cell.appendChild(desktopValue);
+        cell.appendChild(mobileValue);
+        return cell;
     }
+
+    function CreateEmailListCell(className, text) {
+        var cell = document.createElement("td");
+        cell.classList.add(className);
+
+        if (text !== null && text !== undefined && text.length > 0) {
+            cell.textContent = text;
+        }
+
+        return cell;
+    }
+
+    function CreateEmailRowClickHandler(emailHref) {
+        return function () {
+            if (emailHref.length > 1) {
+                location.hash = emailHref.substring(1);
+            }
+        };
+    }
+
+    function IsFormerCommissioner(title) {
+        var normalizedTitle = (title || "").toLowerCase();
+        return normalizedTitle.indexOf("commissioner") > -1;
+    }
+
+    function GetMailboxDistrict(mailbox) {
+        if (mailbox === null || mailbox === undefined) {
+            return 0;
+        }
+
+        var district = parseInt(mailbox.District, 10);
+        if (!isNaN(district) && district > 0) {
+            return district;
+        }
+
+        var title = mailbox.Title || "";
+        var match = /District\s+(\d+)/i.exec(title);
+        return match !== null ? parseInt(match[1], 10) || 0 : 0;
+    }
+
+    function GetMailboxFinalTermYear(mailbox) {
+        if (mailbox === null || mailbox === undefined) {
+            return 0;
+        }
+
+        var finalTermYear = parseInt(mailbox.FinalTermYear, 10);
+        return isNaN(finalTermYear) ? 0 : finalTermYear;
+    }
+
+    function CompareFormerCommissioners(left, right) {
+        var leftYear = GetMailboxFinalTermYear(left);
+        var rightYear = GetMailboxFinalTermYear(right);
+
+        if (leftYear !== rightYear) {
+            return leftYear - rightYear;
+        }
+
+        var leftName = (left.Name || "").toLowerCase();
+        var rightName = (right.Name || "").toLowerCase();
+        if (leftName !== rightName) {
+            return leftName.localeCompare(rightName);
+        }
+
+        var leftMailbox = (left.MailboxName || "").toLowerCase();
+        var rightMailbox = (right.MailboxName || "").toLowerCase();
+        return leftMailbox.localeCompare(rightMailbox);
+    }
+
+    function SetCommissionerSection(section) {
+        var normalizedSection = NormalizeSection(section);
+        CoMail.currentSection = normalizedSection;
+
+        var county = document.getElementById("CountyCommissionersSection");
+        var former = document.getElementById("FormerCommissionersSection");
+        var countyButton = document.getElementById("CountyCommissionersButton");
+        var formerButton = document.getElementById("FormerCommissionersButton");
+
+        if (county !== null) {
+            var countyHidden = normalizedSection !== "county";
+            county.hidden = countyHidden;
+            county.classList.toggle("is-hidden", countyHidden);
+            county.setAttribute("aria-hidden", countyHidden ? "true" : "false");
+            county.style.display = countyHidden ? "none" : "";
+        }
+
+        if (former !== null) {
+            var formerHidden = normalizedSection !== "former";
+            former.hidden = formerHidden;
+            former.classList.toggle("is-hidden", formerHidden);
+            former.setAttribute("aria-hidden", formerHidden ? "true" : "false");
+            former.style.display = formerHidden ? "none" : "";
+        }
+
+        UpdateSectionButton(countyButton, normalizedSection === "county");
+        UpdateSectionButton(formerButton, normalizedSection === "former");
+    }
+    CoMail.SetCommissionerSection = SetCommissionerSection;
+
+    function UpdateReturnLink(section) {
+        var link = document.getElementById("ReturnToSection");
+        var close = document.getElementById("CloseMailboxView");
+        if (link === null) {
+            if (close !== null) {
+                close.href = "#section=" + encodeURIComponent(NormalizeSection(section));
+                close.setAttribute("aria-label", "Close mailbox archive");
+            }
+            return;
+        }
+
+        var normalizedSection = NormalizeSection(section);
+        var href = "#section=" + encodeURIComponent(normalizedSection);
+        link.href = href;
+        link.textContent = normalizedSection === "former"
+            ? "Return to Former Commissioners"
+            : "Return to County Commissioners";
+        link.setAttribute("aria-label", link.textContent);
+
+        if (close !== null) {
+            close.href = href;
+            close.setAttribute("aria-label", "Close mailbox archive");
+        }
+    }
+    CoMail.UpdateReturnLink = UpdateReturnLink;
+
+    function ResetMailboxView() {
+        SetValue("MailboxName", "");
+        SetValue("TotalPageCount", "");
+
+        var prev = document.getElementById("PreviousPage");
+        if (prev !== null) {
+            prev.href = "#";
+            prev.classList.add("is-disabled");
+            prev.setAttribute("aria-disabled", "true");
+            prev.tabIndex = -1;
+        }
+
+        var next = document.getElementById("NextPage");
+        if (next !== null) {
+            next.href = "#";
+            next.classList.add("is-disabled");
+            next.setAttribute("aria-disabled", "true");
+            next.tabIndex = -1;
+        }
+
+        clearElement(document.getElementById("EmailList"));
+    }
+    CoMail.ResetMailboxView = ResetMailboxView;
+
+    function UpdateSectionButton(button, isSelected) {
+        if (button === null) {
+            return;
+        }
+
+        button.classList.toggle("is-active", isSelected);
+        button.setAttribute("aria-selected", isSelected ? "true" : "false");
+    }
+
+    function NormalizeSection(section) {
+        return (section || "").toLowerCase() === "former" ? "former" : "county";
+    }
+
     function BuildMailboxes() {
-        var comm = document.getElementById("Commissioners");
+        var commissioners = document.getElementById("Commissioners");
         var former = document.getElementById("FormerCommissioners");
         var other = document.getElementById("OtherPublic");
-        for (var _i = 0, _a = CoMail.mailboxes; _i < _a.length; _i++) {
-            var m = _a[_i];
+        var formerCommissioners = [];
+
+        if (commissioners === null || former === null || other === null) {
+            return;
+        }
+
+        clearElement(commissioners);
+        clearElement(former);
+        clearElement(other);
+
+        for (var i = 0; i < CoMail.mailboxes.length; i++) {
+            var m = CoMail.mailboxes[i];
             if (m.Active === 0) {
-                if (m.Title.indexOf("ommiss") !== -1) // they are a former commissioner
-                 {
-                    former.appendChild(BuildMailboxItem(m.MailboxName, m.Name, m.Title));
+                if (IsFormerCommissioner(m.Title)) {
+                    formerCommissioners.push(m);
                 }
-                else // they are other than a commissioner
-                 {
-                    other.appendChild(BuildMailboxItem(m.MailboxName, m.Name, m.Title));
+                else {
+                    other.appendChild(BuildMailboxItem(m, CoMail.currentSection || "county", false));
                 }
             }
             else {
-                comm.appendChild(BuildMailboxItem(m.MailboxName, m.Name, m.Title));
+                commissioners.appendChild(BuildMailboxItem(m, "county", true));
             }
         }
-        document.getElementById("MailboxList").style.display = "block";
+
+        BuildFormerCommissionerSections(former, formerCommissioners);
+        SyncFormerCommissionerDistricts();
+        SetCommissionerSection(CoMail.currentSection || "county");
+        Show("MailboxList");
+        Hide("MailboxView");
     }
     CoMail.BuildMailboxes = BuildMailboxes;
-    function BuildMailboxItem(mailbox, name, title) {
-        var li = document.createElement("li");
-        li.classList.add("d-flex");
-        li.classList.add("col-sm-6");
-        li.classList.add("col-xl-4");
-        li.classList.add("col-xs-12");
-        var sp = document.createElement("span");
-        sp.style.marginRight = "1em";
-        sp.appendChild(document.createTextNode(title.replace("Commissioner of ", "").replace("Former", "")));
-        li.appendChild(sp);
-        var a = document.createElement("a");
-        a.href = "#mailbox=" + mailbox + "&page=1";
-        a.appendChild(document.createTextNode(name));
-        li.appendChild(a);
-        return li;
+
+    function BuildFormerCommissionerSections(container, mailboxes) {
+        var formerMailboxes = mailboxes.slice(0);
+        formerMailboxes.sort(CompareFormerCommissioners);
+        var mobileLayout = IsMobileFormerCommissionerLayout();
+
+        for (var district = 1; district <= 5; district++) {
+        var districtSection = document.createElement("details");
+            districtSection.classList.add("former-commissioners__district");
+            districtSection.id = "FormerCommissionersDistrict" + district;
+            districtSection.open = !mobileLayout;
+
+            districtSection.addEventListener("toggle", (function (section) {
+                return function () {
+                    if (!IsMobileFormerCommissionerLayout()) {
+                        return;
+                    }
+
+                    section.setAttribute("data-mobile-open", section.open ? "true" : "false");
+                };
+            })(districtSection));
+
+            var districtHeader = document.createElement("summary");
+            districtHeader.classList.add("former-commissioners__district-header", "former-commissioners__district-summary");
+
+            var heading = document.createElement("h3");
+            heading.classList.add("title", "is-5", "former-commissioners__district-title");
+
+            var headingDesktop = document.createElement("span");
+            headingDesktop.classList.add("former-commissioners__district-label", "former-commissioners__district-label--desktop");
+            headingDesktop.textContent = "Former Commissioners for District " + district;
+
+            var headingMobile = document.createElement("span");
+            headingMobile.classList.add("former-commissioners__district-label", "former-commissioners__district-label--mobile");
+            headingMobile.textContent = "District " + district;
+
+            heading.appendChild(headingDesktop);
+            heading.appendChild(headingMobile);
+
+            var cards = document.createElement("div");
+            var cardsId = districtSection.id + "Cards";
+            cards.id = cardsId;
+            cards.classList.add("columns", "is-multiline", "is-variable", "is-4", "former-commissioners__cards");
+
+            for (var i = 0; i < formerMailboxes.length; i++) {
+                var mailbox = formerMailboxes[i];
+                if (GetMailboxDistrict(mailbox) !== district) {
+                    continue;
+                }
+
+                cards.appendChild(BuildMailboxItem(mailbox, "former", true));
+            }
+
+            districtHeader.appendChild(heading);
+            districtHeader.appendChild(CreateFormerCommissionerChevron());
+            districtSection.appendChild(districtHeader);
+            districtSection.appendChild(cards);
+            container.appendChild(districtSection);
+        }
+    }
+    CoMail.BuildFormerCommissionerSections = BuildFormerCommissionerSections;
+
+    function SyncFormerCommissionerDistricts() {
+        var sections = document.querySelectorAll(".former-commissioners__district");
+        if (sections === null || sections.length === 0) {
+            return;
+        }
+
+        var mobileLayout = IsMobileFormerCommissionerLayout();
+        for (var i = 0; i < sections.length; i++) {
+            var section = sections[i];
+            if (mobileLayout) {
+                var isOpen = section.getAttribute("data-mobile-open");
+                section.open = isOpen === null ? false : isOpen === "true";
+            }
+            else {
+                section.open = true;
+            }
+        }
+    }
+    CoMail.SyncFormerCommissionerDistricts = SyncFormerCommissionerDistricts;
+
+    function IsMobileFormerCommissionerLayout() {
+        if (window.matchMedia === undefined) {
+            return false;
+        }
+
+        return window.matchMedia("(max-width: 768px)").matches;
+    }
+    CoMail.IsMobileFormerCommissionerLayout = IsMobileFormerCommissionerLayout;
+
+    function CreateFormerCommissionerChevron() {
+        var icon = document.createElement("span");
+        icon.classList.add("icon", "is-small", "former-commissioners__district-icon");
+        icon.setAttribute("aria-hidden", "true");
+        icon.appendChild(CreateChevronDownIcon());
+        return icon;
+    }
+
+    function BuildMailboxItem(mailbox, section, isCommissionerCard) {
+        var column = document.createElement("div");
+        column.classList.add("column", "is-half-tablet", "is-one-third-desktop");
+
+        var sectionKind = NormalizeSection(section || CoMail.currentSection || "county");
+        var cardHref = "#section=" + encodeURIComponent(sectionKind)
+            + "&mailbox=" + encodeURIComponent(mailbox.MailboxName)
+            + "&page=1";
+
+        var card = document.createElement("a");
+        card.classList.add("card", "mailbox-card", "mailbox-card--link");
+        if (isCommissionerCard) {
+            card.classList.add("mailbox-card--commissioner");
+        }
+        card.href = cardHref;
+        card.setAttribute("aria-label", "View emails for " + mailbox.Name);
+
+        var content = document.createElement("div");
+        content.classList.add("card-content", "mailbox-card__content");
+
+        var details = document.createElement("div");
+        details.classList.add("mailbox-card__details");
+
+        var heading = document.createElement("h3");
+        heading.classList.add("title", "is-5", "mailbox-card__name");
+        heading.textContent = mailbox.Name;
+
+        if (isCommissionerCard && sectionKind === "county") {
+            var district = GetMailboxDistrict(mailbox);
+            var meta = document.createElement("p");
+            meta.classList.add("mailbox-card__meta");
+            meta.textContent = district > 0 ? "District " + district : "District";
+            details.appendChild(meta);
+        }
+
+        var headline = document.createElement("div");
+        headline.classList.add("mailbox-card__headline");
+
+        headline.appendChild(heading);
+
+        if (isCommissionerCard) {
+            var icon = document.createElement("span");
+            icon.classList.add("icon", "is-small", "mailbox-card__icon");
+            icon.setAttribute("aria-hidden", "true");
+            icon.appendChild(CreateEnvelopeIcon());
+            headline.appendChild(icon);
+        }
+
+        details.appendChild(headline);
+        content.appendChild(details);
+        card.appendChild(content);
+        column.appendChild(card);
+        return column;
     }
     CoMail.BuildMailboxItem = BuildMailboxItem;
+
     function clearElement(node) {
+        if (node === null) {
+            return;
+        }
+
         while (node.firstChild) {
             node.removeChild(node.firstChild);
         }
     }
     CoMail.clearElement = clearElement;
+
+    function CreateEnvelopeIcon() {
+        var svg = CreateInlineIcon();
+        var body = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        body.setAttribute("x", "3");
+        body.setAttribute("y", "5");
+        body.setAttribute("width", "18");
+        body.setAttribute("height", "14");
+        body.setAttribute("rx", "1.75");
+        body.setAttribute("fill", "none");
+        body.setAttribute("stroke", "currentColor");
+        body.setAttribute("stroke-width", "1.75");
+
+        var flap = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        flap.setAttribute("d", "M3.75 6.5L12 12.5L20.25 6.5");
+        flap.setAttribute("fill", "none");
+        flap.setAttribute("stroke", "currentColor");
+        flap.setAttribute("stroke-width", "1.75");
+
+        var lower = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        lower.setAttribute("d", "M3.75 18.25L9.9 12.85");
+        lower.setAttribute("fill", "none");
+        lower.setAttribute("stroke", "currentColor");
+        lower.setAttribute("stroke-width", "1.75");
+
+        var lowerRight = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        lowerRight.setAttribute("d", "M20.25 18.25L14.1 12.85");
+        lowerRight.setAttribute("fill", "none");
+        lowerRight.setAttribute("stroke", "currentColor");
+        lowerRight.setAttribute("stroke-width", "1.75");
+
+        svg.appendChild(body);
+        svg.appendChild(flap);
+        svg.appendChild(lower);
+        svg.appendChild(lowerRight);
+        return svg;
+    }
+
+    function CreatePaperclipIcon() {
+        var svg = CreateInlineIcon();
+        var clip = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        clip.setAttribute("d", "M14 6.5V14a4 4 0 1 1-8 0V8a2.5 2.5 0 1 1 5 0v5.5a1 1 0 1 1-2 0V8.75");
+        clip.setAttribute("fill", "none");
+        clip.setAttribute("stroke", "currentColor");
+        clip.setAttribute("stroke-width", "1.75");
+        svg.appendChild(clip);
+        return svg;
+    }
+
+    function CreateChevronDownIcon() {
+        var svg = CreateInlineIcon();
+        var chevron = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        chevron.setAttribute("d", "M6.5 9.5L12 15l5.5-5.5");
+        chevron.setAttribute("fill", "none");
+        chevron.setAttribute("stroke", "currentColor");
+        chevron.setAttribute("stroke-width", "1.9");
+        svg.appendChild(chevron);
+        return svg;
+    }
+
+    function CreateInlineIcon() {
+        var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("viewBox", "0 0 24 24");
+        svg.setAttribute("aria-hidden", "true");
+        svg.setAttribute("focusable", "false");
+        svg.setAttribute("role", "presentation");
+        svg.classList.add("inline-icon-svg");
+        return svg;
+    }
+
     function Show(id) {
         var e = document.getElementById(id);
-        e.style.display = "block";
+        if (e === null) {
+            return;
+        }
+
+        e.hidden = false;
+        e.setAttribute("aria-hidden", "false");
+
+        if (id === "MailboxView") {
+            e.classList.add("mailbox-archive--open");
+        }
     }
     CoMail.Show = Show;
+
     function Hide(id) {
         var e = document.getElementById(id);
-        e.style.display = "none";
+        if (e === null) {
+            return;
+        }
+
+        e.hidden = true;
+        e.setAttribute("aria-hidden", "true");
+
+        if (id === "MailboxView") {
+            e.classList.remove("mailbox-archive--open");
+        }
     }
     CoMail.Hide = Hide;
 })(CoMail || (CoMail = {}));
-//# sourceMappingURL=UI.js.map
-/// <reference path="locationhash.ts" />
-/// <reference path="xhr.ts" />
-/// <reference path="ui.ts" />
-/// <reference path="typings/es6-promise/es6-promise.d.ts" />
+
 var CoMail;
 (function (CoMail) {
     CoMail.mailboxes = [];
     CoMail.currentEmailList = [];
     CoMail.currentHash = null;
+    CoMail.currentEmailCount = 0;
+    CoMail.currentSection = "county";
+
+    var loadingOperations = 0;
+
     function Start() {
+        loadingOperations = 0;
+        CoMail.Hide("Loading");
+        SetLoadingModalState(false);
+        CoMail.InitializeEmailModal(ModalClosed);
         window.onhashchange = HashChange;
-        // let's check the current hash to make sure we don't need to start on a given mailbox / page / email
+        window.addEventListener("resize", ViewportChanged);
         GetMailBoxes();
     }
     CoMail.Start = Start;
+
     function ModalClosed(evt) {
-        location.hash = CoMail.currentHash.RemoveEmailId();
+        if (evt !== undefined && evt !== null) {
+            evt.preventDefault();
+        }
+
+        if (CoMail.currentHash !== null) {
+            location.hash = CoMail.currentHash.RemoveEmailId();
+        }
+
         var emailMessage = document.getElementById("EmailMessage");
         CoMail.clearElement(emailMessage);
+        CoMail.CloseEmailModal();
     }
     CoMail.ModalClosed = ModalClosed;
+
     function HashChange() {
         HandleHash();
     }
     CoMail.HashChange = HashChange;
+
+    function ViewportChanged() {
+        if (CoMail.SyncFormerCommissionerDistricts !== undefined) {
+            CoMail.SyncFormerCommissionerDistricts();
+        }
+
+        if (CoMail.currentHash === null) {
+            return;
+        }
+
+        UpdateArchiveVisibility(CoMail.currentHash, false);
+    }
+
     function HandleHash() {
-        var hash = location.hash;
         var oldHash = CoMail.currentHash;
         CoMail.currentHash = new CoMail.LocationHash(location.hash.substring(1));
+        CoMail.currentSection = CoMail.currentHash.Section;
         ShowMenu(CoMail.currentHash, oldHash);
     }
+
     function ShowMenu(lh, oh) {
         if (lh.Mailbox.length === 0) {
-            CoMail.Show("MailboxList");
-            CoMail.ClearEmailList();
-            CoMail.Hide("MailboxView");
+            UpdateArchiveVisibility(lh, true);
+            CoMail.CloseEmailModal();
         }
         else {
-            if (oh === null || oh.Mailbox !== lh.Mailbox || oh.Page !== lh.Page) {
+            if (HasMailboxViewChanged(lh, oh)) {
                 CoMail.UpdateMailboxName(lh.Mailbox);
                 GetEmailList(CoMail.currentHash);
                 GetEmailCount(CoMail.currentHash);
             }
-            CoMail.Hide("MailboxList");
-            CoMail.Show("MailboxView");
+
+            CoMail.UpdateReturnLink(lh.Section);
+            UpdateArchiveVisibility(lh, false);
+
+            if (lh.EmailId < 0) {
+                CoMail.CloseEmailModal();
+            }
         }
+
         if (lh.EmailId > -1) {
             GetEmail(lh.EmailId);
         }
     }
-    function GetEmail(EmailId) {
-        CoMail.Show("Loading");
-        var email = new CoMail.Email();
-        email.Get(EmailId)
-            .then(function (mail) {
-            CoMail.BuildEmailView(mail);
-            $('#EmailView').modal('show');
-            CoMail.Hide("Loading");
-        }, function () {
-            console.log('error getting Email');
-            CoMail.Hide("EmailLoading");
-        });
+
+    function UpdateArchiveVisibility(lh, resetSelectionState) {
+        var wideLayout = IsWideArchiveLayout();
+
+        if (lh.Mailbox.length === 0) {
+            if (resetSelectionState) {
+                CoMail.ResetMailboxView();
+            }
+
+            CoMail.SetCommissionerSection(lh.Section);
+            CoMail.Show("MailboxList");
+            CoMail.Hide("MailboxView");
+            SetArchiveModalState(false);
+            window.scrollTo(0, 0);
+            return;
+        }
+
+        CoMail.Show("MailboxView");
+        SetArchiveModalState(wideLayout);
+
+        var mailboxView = document.getElementById("MailboxView");
+        if (mailboxView !== null) {
+            mailboxView.scrollTop = 0;
+        }
+
+        CoMail.Hide("MailboxList");
+
+        if (!wideLayout) {
+            window.scrollTo(0, 0);
+        }
     }
+
+    function SetArchiveModalState(isOpen) {
+        document.body.classList.toggle("archive-modal-open", isOpen);
+        document.documentElement.classList.toggle("archive-modal-open", isOpen);
+    }
+
+    function IsWideArchiveLayout() {
+        if (window.matchMedia === undefined) {
+            return true;
+        }
+
+        return window.matchMedia("(min-width: 769px)").matches;
+    }
+
+    function HasMailboxViewChanged(lh, oh) {
+        if (oh === null) {
+            return true;
+        }
+
+        return oh.Mailbox !== lh.Mailbox ||
+            oh.Page !== lh.Page ||
+            oh.Subject !== lh.Subject ||
+            oh.From !== lh.From;
+    }
+
+    function GetEmail(emailId) {
+        BeginLoading();
+        var email = new CoMail.Email();
+        email.Get(emailId)
+            .then(function (mail) {
+                try {
+                    CoMail.BuildEmailView(mail);
+                    CoMail.OpenEmailModal();
+                }
+                finally {
+                    EndLoading();
+                }
+            }, function () {
+                console.log("error getting Email");
+                EndLoading();
+            });
+    }
+
     function GetEmailList(lh) {
-        CoMail.Show("Loading");
-        var EmailList = document.getElementById("EmailList");
-        CoMail.clearElement(EmailList);
+        BeginLoading();
+        CoMail.ClearEmailList();
+
         var email = new CoMail.Email();
         email.GetList(lh)
             .then(function (allmail) {
-            CoMail.currentEmailList = allmail;
-            CoMail.BuildEmailList();
-            CoMail.Hide("Loading");
-        }, function () {
-            console.log('error getting Email List');
-            CoMail.Hide("Loading");
-        });
+                try {
+                    CoMail.currentEmailList = allmail;
+                    CoMail.BuildEmailList();
+                }
+                finally {
+                    EndLoading();
+                }
+            }, function () {
+                console.log("error getting Email List");
+                EndLoading();
+            });
     }
+
     function GetEmailCount(lh) {
         var email = new CoMail.Email();
         email.GetCount(lh)
             .then(function (emailCount) {
-            CoMail.currentEmailCount = emailCount;
-            console.log('current email count', CoMail.currentEmailCount);
-            BuildPaging();
-        }, function () {
-            console.log('error getting Email Count');
-        });
+                CoMail.currentEmailCount = emailCount;
+                BuildPaging();
+            }, function () {
+                console.log("error getting Email Count");
+            });
     }
+
     function BuildPaging() {
-        // first let's update the totalpagecount
-        var tpc = document.getElementById("TotalPageCount");
-        CoMail.clearElement(tpc);
-        var max = Math.max(Math.floor(CoMail.currentEmailCount / 20), 1);
-        tpc.appendChild(document.createTextNode("Page " + CoMail.currentHash.Page + " of " + max));
-        var prev = document.getElementById("PreviousPage");
-        prev.href = location.hash;
-        UpdatePage(prev, CoMail.currentHash.Page - 1, max);
-        var next = document.getElementById("NextPage");
-        UpdatePage(next, CoMail.currentHash.Page + 1, max);
-    }
-    function UpdatePage(a, page, max) {
-        a.href = location.hash;
-        if (page < max && page > 0) {
-            if (a.href.indexOf("page=") > -1) {
-                a.href = a.href.replace("page=" + CoMail.currentHash.Page, "page=" + page);
-            }
-            else {
-                a.href += "&page=" + page;
-            }
+        if (CoMail.currentHash === null) {
+            return;
+        }
+
+        var totalPageCount = document.getElementById("TotalPageCount");
+        if (totalPageCount !== null) {
+            CoMail.clearElement(totalPageCount);
+            var max = Math.max(Math.ceil(CoMail.currentEmailCount / CoMail.PageSize), 1);
+            totalPageCount.textContent = "Page " + CoMail.currentHash.Page + " of " + max;
+
+            var prev = document.getElementById("PreviousPage");
+            UpdatePage(prev, CoMail.currentHash.Page - 1, max);
+
+            var next = document.getElementById("NextPage");
+            UpdatePage(next, CoMail.currentHash.Page + 1, max);
         }
     }
+
+    function UpdatePage(a, page, max) {
+        if (a === null) {
+            return;
+        }
+
+        var disabled = page < 1 || page > max;
+        a.classList.toggle("is-disabled", disabled);
+        a.setAttribute("aria-disabled", disabled ? "true" : "false");
+        a.tabIndex = disabled ? -1 : 0;
+
+        if (disabled) {
+            a.href = location.hash || "#";
+            a.onclick = function (evt) {
+                evt.preventDefault();
+                return false;
+            };
+            return;
+        }
+
+        a.onclick = null;
+        a.href = location.hash;
+
+        if (a.href.indexOf("page=") > -1) {
+            a.href = a.href.replace("page=" + CoMail.currentHash.Page, "page=" + page);
+        }
+        else {
+            a.href += "&page=" + page;
+        }
+    }
+
     function GetMailBoxes() {
+        BeginLoading();
         var mb = new CoMail.PublicMailBox();
         mb.Get()
             .then(function (all) {
-            CoMail.mailboxes = all;
-            CoMail.BuildMailboxes();
+                try {
+                    CoMail.mailboxes = all;
+                    if (location.hash.substring(1).length > 0) {
+                        var initialHash = new CoMail.LocationHash(location.hash.substring(1));
+                        CoMail.currentSection = initialHash.Section;
+                    }
+
+                    CoMail.BuildMailboxes();
+                }
+                finally {
+                    EndLoading();
+                }
+
+                if (location.hash.substring(1).length > 0) {
+                    HandleHash();
+                }
+            }, function () {
+                console.log("error getting All Mailboxes");
+                EndLoading();
+            });
+    }
+
+    function BeginLoading() {
+        if (loadingOperations === 0) {
+            CoMail.Show("Loading");
+            SetLoadingModalState(true);
+        }
+
+        loadingOperations++;
+    }
+
+    function EndLoading() {
+        if (loadingOperations > 0) {
+            loadingOperations--;
+        }
+
+        if (loadingOperations === 0) {
             CoMail.Hide("Loading");
-            if (location.hash.substring(1).length > 0)
-                HandleHash();
-        }, function () {
-            console.log('error getting All Mailboxes');
-        });
+            SetLoadingModalState(false);
+        }
+    }
+
+    function SetLoadingModalState(isOpen) {
+        document.body.classList.toggle("loading-modal-open", isOpen);
+        document.documentElement.classList.toggle("loading-modal-open", isOpen);
     }
 })(CoMail || (CoMail = {}));
-//# sourceMappingURL=app.js.map

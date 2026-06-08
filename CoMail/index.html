@@ -1,179 +1,247 @@
-﻿<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang='en-US'>
+<!DOCTYPE html>
+<html lang="en-US">
 <head>
-  <title>Email Viewer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link type="text/css" rel="stylesheet" xmlns="http://www.w3.org/1999/xhtml" />
-  <link href="Content/favicon.ico" rel="icon" type="image/x-icon" />
-  <meta name="description" content="View email sent and received by Officials in Clay County, Florida." />
-  <link href="Content/bootstrap.min.css" rel="stylesheet" />  
-  <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
-  <link href="Content/bootstrap-grid.min.css" rel="stylesheet" />
-  <link href="Content/main.min.css" rel="stylesheet" />
+  <meta charset="utf-8" />
+  <title>Clay County Public Email</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="View email sent and received by officials in Clay County, Florida." />
+  <link rel="icon" href="Content/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css" />
+  <link rel="stylesheet" href="Content/site/theme.min.css?v2.5.1.3552" />
 </head>
-<body class="container">
-  <nav class="navbar navbar-light bg-faded fixed-top">
-    <div class="d-inline-flex container justify-content-between">
-      <a class="navbar-brand" href="#">Clay County Public Email</a>
-      <div class="col-4"
-           id="Loading">
-        <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
-        <span class="sr-only">Loading...</span>
-        <p style="display: inline-block;">Loading information...</p>
-      </div>
-      <div class="navbar">
+<body class="has-navbar-fixed-top site-body">
+  <a class="skip-link" href="#main-content">Skip to main content</a>
 
-        <ul class="navbar-nav text-center">
-          <li class="nav-item active">
-            <a class="nav-link" href="#">Home</a>
-          </li>
-        </ul>
+  <header>
+    <nav class="navbar is-fixed-top site-navbar" aria-label="Primary">
+      <div class="navbar-brand">
+        <a class="navbar-item site-brand" href="#" aria-label="Clay County Public Records home">
+          <span class="site-brand__mark" aria-hidden="true">
+            <img class="site-brand__seal" src="Seal800Transparent.png" alt="" />
+          </span>
+          <span class="site-brand__text">Clay County Public Records</span>
+        </a>
       </div>
+
+        <div class="navbar-menu is-active">
+        <div class="navbar-end">
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <div id="Loading" class="loading-modal" role="status" aria-live="polite" aria-atomic="true" hidden>
+    <div class="loading-modal__backdrop" aria-hidden="true"></div>
+    <div class="loading-modal__content" role="presentation">
+      <span class="loading-modal__spinner" aria-hidden="true"></span>
+      <p class="loading-modal__text">Loading information...</p>
     </div>
-  </nav>
+  </div>
 
-  <div class="main-container">
-    <section id="MailboxList"
-             class="content-wrapper">
-      <h2>County Commissioners</h2>
-      <ul id="Commissioners"
-          class="d-flex flex-row flex-wrap"></ul>
-      <h2>Former Commissioners</h2>
-      <ul id="FormerCommissioners"
-          class="d-flex flex-row flex-wrap"></ul>
-      <!--<h2>Other Public Mailboxes</h2>-->
-      <ul id="OtherPublic"
-          class="flex-row flex-wrap"
-          style="padding-left: 0;">
-        The County Manager, Deputy County Manager and Assistant County Managers' emails can be obtained through a public records request. You can make that request by emailing <a href="mailto:publicrecords@claycountygov.com">publicrecords@claycountygov.com</a>.
+  <main id="main-content" class="section site-main" tabindex="-1">
+    <div class="container is-max-desktop">
+      <section id="MailboxList" aria-labelledby="MailboxListHeading" hidden>
+        <div class="intro-card content">
+          <h1 id="MailboxListHeading" class="title is-2">Commissioner email archives</h1>
+          <p class="subtitle is-6">
+            Select a mailbox to review public email for current and former commissioners.
+          </p>
+        </div>
 
-      </ul>
+        <div class="buttons is-centered mailbox-switcher" role="tablist" aria-label="Commissioner views">
+          <a
+            id="CountyCommissionersButton"
+            class="button is-link is-light is-active mailbox-switcher__button"
+            href="#section=county"
+            role="tab"
+            aria-selected="true">
+            County Commissioners
+          </a>
+          <a
+            id="FormerCommissionersButton"
+            class="button is-link is-light mailbox-switcher__button"
+            href="#section=former"
+            role="tab"
+            aria-selected="false">
+            Former Commissioners
+          </a>
+        </div>
 
-    </section>
+        <section class="site-panel commissioner-panel" id="CountyCommissionersSection">
+          <div class="mailbox-header">
+            <h2 class="title is-4">County Commissioners</h2>
+            <p class="subtitle help is-6">Current officeholders and their public mailbox.</p>
+          </div>
+          <div id="Commissioners" class="columns is-multiline is-variable is-4"></div>
+        </section>
 
-    <section class="content-wrapper"
-             id="MailboxView">
-      <section class="" style="margin-bottom: 1rem;">
-        <h3 id="MailboxName"></h3>
+        <section class="site-panel commissioner-panel" id="FormerCommissionersSection" hidden>
+          <div class="mailbox-header">
+            <h2 class="title is-4">Former Commissioners</h2>
+            <h3 class="subtitle help is-6">Past commissioners remain available for public review.</h3>
+          </div>
+          <div id="FormerCommissioners" class="former-commissioners"></div>
+        </section>
+
+        <section class="site-panel" id="OtherPublicSection">
+          <div class="mailbox-header">
+            <h2 class="title is-4">Other Public Mailboxes</h2>
+            <h3 class="subtitle help is-6">
+              Administrative accounts are handled through public records requests.
+            </h3>
+          </div>
+          <div class="notification is-info is-light mailbox-note">
+            The County Manager, Deputy County Manager, and Assistant County Managers' emails
+            can be obtained through a public records request. You can make that request by
+            emailing
+            <a href="mailto:publicrecords@claycountygov.com">publicrecords@claycountygov.com</a>.
+          </div>
+          <div id="OtherPublic" class="columns is-multiline is-variable is-4"></div>
+        </section>
       </section>
 
-      <hr />
-
-      <section class="flex-wrap no-gutters" id="SearchResultsTable">
-        <div class="flex-row">
-          <div class="row justify-content-between" style="margin: 1em 0 1em 0;">
-            <div id="TotalPageCount"
-                 class="d-inline-block">              
+      <section id="MailboxView" class="mailbox-archive" aria-labelledby="MailboxName" hidden>
+        <div class="mailbox-archive__shell site-panel">
+          <div class="mailbox-archive__actions">
+            <div class="mailbox-return">
+              <a id="ReturnToSection" class="button is-text is-small" href="#section=county">
+                Return to County Commissioners
+              </a>
             </div>
-            <nav class="d-inline-block" aria-label="Page navigation">
-              <ul class="pagination ">
-                <li class="page-item">
-                  <a id="PreviousPage" class="page-link" href="#" aria-label="Previous">
-                    <span>Previous</span>
-                  </a>
-                </li>
-                <li class="page-item">
-                  <a id="NextPage" class="page-link" href="#" aria-label="Next">
-                    <span>Next</span>
-                  </a>
-                </li>
-              </ul>
-            </nav>
-
+            <a
+              id="CloseMailboxView"
+              class="button is-small mailbox-archive__close"
+              href="#section=county"
+              aria-label="Close mailbox archive">
+              <span class="icon is-small" aria-hidden="true">
+                <svg class="inline-icon-svg" viewBox="0 0 24 24" focusable="false" role="presentation">
+                  <path d="M6 6L18 18"></path>
+                  <path d="M18 6L6 18"></path>
+                </svg>
+              </span>
+            </a>
           </div>
-        </div>
 
-        <div class="d-flex flex-row flex-wrap" id="EmailTableHeader">
-          <div class="col-12 d-flex flex-row flex-wrap">
-            <div class="col-3 d-flex">Date/Time Received</div>
-            <div class="col-3 d-flex">From</div>
-            <div class="col-4 d-flex">Subject</div>
-            <div class="col-2 d-flex"></div>
-          </div>
-        </div>
-
-        <div id="EmailList"
-             class="d-flex flex-row flex-wrap">
-        </div>
-        <div class="d-flex flex-row flex-wrap" id="EmailTableFootin">
-          <div class="col-12 d-flex flex-row flex-wrap">
-            <div></div>
-          </div>
-        </div>
-      </section>
-
-    </section>
-    <div class="modal fade" id="EmailView" tabindex="-1" role="dialog" aria-labelledby="Email View" aria-hidden="true">
-      <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-          <div class="modal-body">
-            <div class="container-fluid">
-
-              <div class="row flex-row flex-wrap">
-                <div class="col-2">Date Received:</div>
-                <div id="EmailDateReceived"
-                     class="col-10"></div>
-              </div>
-
-              <div class="row flex-row flex-wrap">
-                <div class="col-2">To:</div>
-                <div id="EmailTo"
-                     class="col-10"></div>
-              </div>
-
-              <div class="row flex-row flex-wrap">
-                <div class="col-2">Cc:</div>
-                <div id="EmailCc"
-                     class="col-10"></div>
-              </div>
-
-              <div class="row flex-row flex-wrap">
-                <div class="col-2">From:</div>
-                <div id="EmailFrom"
-                     class="col-10 flex-wrap"></div>
-              </div>
-
-              <div class="row flex-row flex-wrap">
-                <div class="col-2">Subject:</div>
-                <div id="EmailSubject"
-                     class="col-10"></div>
-              </div>
-              <div class="row flex-row flex-wrap">
-                <div class="col-2">Attachments:</div>
-                <div id="EmailAttachments"
-                     class="col-10 flex-wrap"></div>
-              </div>
-
-              <div class="row flex-row flex-wrap">
-                <div class="col-2">Message:</div>
-                <div id="EmailMessage"
-                     class="col-10">
+          <div class="mailbox-archive__content">
+            <div class="level mailbox-header">
+              <div class="level-left">
+                <div>
+                  <p class="eyebrow">Mailbox archive</p>
+                  <h2 id="MailboxName" class="title is-3"></h2>
+                  <p id="TotalPageCount" class="help" aria-live="polite" aria-atomic="true"></p>
                 </div>
               </div>
+              <div class="level-right">
+                <nav class="pagination is-small is-rounded" aria-label="Email pages">
+                  <a id="PreviousPage" class="pagination-previous" href="#" aria-label="Go to previous page">
+                    Previous
+                  </a>
+                  <a id="NextPage" class="pagination-next" href="#" aria-label="Go to next page">
+                    Next
+                  </a>
+                </nav>
+              </div>
+            </div>
+
+            <div class="table-container">
+              <table class="table is-fullwidth is-narrow email-table">
+                <caption class="is-sr-only">Public emails in the selected mailbox</caption>
+                <thead>
+                  <tr>
+                    <th scope="col" class="email-date-header">Date received</th>
+                    <th scope="col" class="email-from-header">From</th>
+                    <th scope="col" class="email-subject-header">Subject</th>
+                    <th scope="col" class="has-text-centered email-action-header">Open</th>
+                  </tr>
+                </thead>
+                <tbody id="EmailList"></tbody>
+              </table>
             </div>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          </div>
         </div>
-      </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="EmailView" class="modal" role="dialog" aria-modal="true" aria-labelledby="EmailModalTitle" aria-hidden="true">
+    <div class="modal-background" data-email-modal-close></div>
+    <div class="modal-card email-modal-card">
+      <header class="modal-card-head">
+        <p id="EmailModalTitle" class="modal-card-title">Email Details</p>
+        <button
+          class="delete"
+          type="button"
+          aria-label="Close email details"
+          data-email-modal-close
+          data-email-modal-initial-focus>
+        </button>
+      </header>
+      <section class="modal-card-body">
+        <dl class="email-detail-list">
+          <div class="email-detail-group">
+            <dt>Date received</dt>
+            <dd id="EmailDateReceived"></dd>
+          </div>
+          <div class="email-detail-group">
+            <dt>From</dt>
+            <dd id="EmailFrom"></dd>
+          </div>
+          <div class="email-detail-group">
+            <dt>To</dt>
+            <dd id="EmailTo"></dd>
+          </div>
+          <div class="email-detail-group">
+            <dt>Cc</dt>
+            <dd id="EmailCc"></dd>
+          </div>
+          <div class="email-detail-group email-detail-group--wide">
+            <dt>Subject</dt>
+            <dd id="EmailSubject"></dd>
+          </div>
+          <div class="email-detail-group email-detail-group--wide">
+            <dt>Attachments</dt>
+            <dd id="EmailAttachments" class="email-attachments"></dd>
+          </div>
+        </dl>
+
+        <section class="email-message-section">
+          <h3 class="title is-5">Message</h3>
+          <div id="EmailMessage" class="content email-message"></div>
+        </section>
+      </section>
+      <footer class="modal-card-foot">
+        <button type="button" class="button is-link" data-email-modal-close>Close</button>
+      </footer>
     </div>
   </div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", function (event)
-    {
-      CoMail.Start();
-      $('#EmailView').on('hide.bs.modal', CoMail.ModalClosed);
+    document.addEventListener("DOMContentLoaded", function () {
+      var request = new XMLHttpRequest();
+      request.open("GET", "API/SiteState", true);
+      request.setRequestHeader("Accept", "application/json");
+      request.onload = function () {
+        if (request.status >= 200 && request.status < 300 && request.responseText) {
+          try {
+            var siteState = JSON.parse(request.responseText);
+            if (siteState && siteState.MaintenanceMode) {
+              window.location.replace("Maintenance.html");
+              return;
+            }
+          }
+          catch (error) {
+            // Fall through and start the app if the state response cannot be parsed.
+          }
+        }
 
+        CoMail.Start();
+      };
+      request.onerror = function () {
+        CoMail.Start();
+      };
+      request.send();
     });
   </script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js"></script>
-  <script src="Scripts/jquery-3.1.1.min.js"></script>
-  <script src="Scripts/jquery-ui-1.12.1.min.js"></script>
-  <script src="Scripts/bootstrap.min.js"></script>
-  <script src="Scripts/bundle.min.js"></script>
+  <script src="Scripts/bundle.min.js?v2.5.1.3552"></script>
 </body>
-
 </html>
-

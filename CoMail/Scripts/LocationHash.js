@@ -1,65 +1,95 @@
 var CoMail;
 (function (CoMail) {
-    var LocationHash // implements ILocationHash
-     = /** @class */ (function () {
-        function LocationHash(locationHash) {
-            this.Mailbox = "";
-            this.Page = 1;
-            this.EmailId = -1;
-            this.Subject = "";
-            this.From = "";
-            var ha = locationHash.split("&");
-            for (var i = 0; i < ha.length; i++) {
-                var k = ha[i].split("=");
-                switch (k[0].toLowerCase()) {
-                    case "mailbox":
-                        this.Mailbox = k[1];
-                        break;
-                    case "page":
-                        this.Page = parseInt(k[1]);
-                        break;
-                    case "emailid":
-                        this.EmailId = parseInt(k[1]);
-                        break;
-                    case "from":
-                        this.From = k[1];
-                        break;
-                    case "subject":
-                        this.Subject = k[1];
-                }
+    function LocationHash(locationHash) {
+        this.Mailbox = "";
+        this.Page = 1;
+        this.EmailId = -1;
+        this.Subject = "";
+        this.From = "";
+        this.Section = "county";
+
+        var segments = locationHash.split("&");
+        for (var i = 0; i < segments.length; i++) {
+            var parts = segments[i].split("=");
+            switch (parts[0].toLowerCase()) {
+                case "mailbox":
+                    this.Mailbox = decodeValue(parts);
+                    break;
+                case "page":
+                    this.Page = parseInt(parts[1], 10);
+                    break;
+                case "emailid":
+                    this.EmailId = parseInt(parts[1], 10);
+                    break;
+                case "from":
+                    this.From = decodeValue(parts);
+                    break;
+                case "subject":
+                    this.Subject = decodeValue(parts);
+                    break;
+                case "section":
+                    this.Section = normalizeSection(decodeValue(parts));
+                    break;
             }
         }
-        LocationHash.prototype.AddEmailId = function (EmailId) {
-            // and using its current properties, going to emit an updated hash
-            // with a new EmailId.
-            var h = "";
-            if (this.Mailbox.length > 0)
-                h += "&mailbox=" + this.Mailbox;
-            if (this.Page > -1)
-                h += "&page=" + this.Page.toString();
-            if (this.Subject.length > 0)
-                h += "&subject=" + this.Subject;
-            if (this.From.length > 0)
-                h += "&from=" + this.From;
-            h += "&emailid=" + EmailId.toString();
-            return h.substring(1);
-        };
-        LocationHash.prototype.RemoveEmailId = function () {
-            // and using its current properties, going to emit an updated hash
-            // with a new EmailId.
-            var h = "";
-            if (this.Mailbox.length > 0)
-                h += "&mailbox=" + this.Mailbox;
-            if (this.Page > -1)
-                h += "&page=" + this.Page.toString();
-            if (this.Subject.length > 0)
-                h += "&subject=" + this.Subject;
-            if (this.From.length > 0)
-                h += "&from=" + this.From;
-            return h.substring(1);
-        };
-        return LocationHash;
-    }());
+    }
+
+    LocationHash.prototype.AddEmailId = function (emailId) {
+        var hash = "";
+        if (this.Section.length > 0) {
+            hash += "&section=" + encodeURIComponent(this.Section);
+        }
+        if (this.Mailbox.length > 0) {
+            hash += "&mailbox=" + encodeURIComponent(this.Mailbox);
+        }
+        if (this.Page > -1) {
+            hash += "&page=" + this.Page.toString();
+        }
+        if (this.Subject.length > 0) {
+            hash += "&subject=" + encodeURIComponent(this.Subject);
+        }
+        if (this.From.length > 0) {
+            hash += "&from=" + encodeURIComponent(this.From);
+        }
+        hash += "&emailid=" + emailId.toString();
+        return hash.substring(1);
+    };
+
+    LocationHash.prototype.RemoveEmailId = function () {
+        var hash = "";
+        if (this.Section.length > 0) {
+            hash += "&section=" + encodeURIComponent(this.Section);
+        }
+        if (this.Mailbox.length > 0) {
+            hash += "&mailbox=" + encodeURIComponent(this.Mailbox);
+        }
+        if (this.Page > -1) {
+            hash += "&page=" + this.Page.toString();
+        }
+        if (this.Subject.length > 0) {
+            hash += "&subject=" + encodeURIComponent(this.Subject);
+        }
+        if (this.From.length > 0) {
+            hash += "&from=" + encodeURIComponent(this.From);
+        }
+        return hash.substring(1);
+    };
+
+    LocationHash.prototype.ToSectionHash = function () {
+        return "section=" + encodeURIComponent(this.Section);
+    };
+
+    function decodeValue(parts) {
+        if (parts.length < 2) {
+            return "";
+        }
+
+        return decodeURIComponent(parts[1]);
+    }
+
+    function normalizeSection(section) {
+        return (section || "").toLowerCase() === "former" ? "former" : "county";
+    }
+
     CoMail.LocationHash = LocationHash;
 })(CoMail || (CoMail = {}));
-//# sourceMappingURL=LocationHash.js.map
