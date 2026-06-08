@@ -113,9 +113,6 @@
     <Content Include="Maintenance.html" />
     <Content Include="index.html" />
     <Content Include="Content\site\theme.css" />
-    <Content Include="Content\site\theme.min.css">
-      <DependentUpon>theme.css</DependentUpon>
-    </Content>
     <Content Include="Content\vendor\fontawesome\LICENSE.txt" />
     <Content Include="Content\vendor\fontawesome\css\fontawesome.min.css" />
     <Content Include="Content\vendor\fontawesome\css\solid.min.css" />
