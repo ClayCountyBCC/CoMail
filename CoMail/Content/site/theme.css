@@ -33,6 +33,10 @@ body.has-navbar-fixed-top {
   padding-top: 4.25rem;
 }
 
+body.site-body {
+  padding-bottom: 2rem;
+}
+
 a {
   color: var(--site-accent);
 }
@@ -205,6 +209,33 @@ a:focus {
 
 .mailbox-note {
   margin-bottom: 1rem;
+}
+
+.site-footer {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.6rem;
+  padding: 0.22rem 1rem;
+  border-top: 1px solid rgba(20, 36, 56, 0.12);
+  background: rgba(247, 250, 252, 0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--site-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}
+
+.site-footer__version {
+  color: var(--site-accent-strong);
+  font-variant-numeric: tabular-nums;
 }
 
 .loading-modal {
@@ -686,6 +717,7 @@ a:focus {
 .email-modal-card .modal-card-title {
   flex: 1 1 auto;
   min-width: 0;
+  margin: 0;
   color: var(--site-accent-strong);
   font-weight: 700;
 }
@@ -954,6 +986,12 @@ body.loading-modal-open {
     padding: 0.9rem 1rem;
   }
 
+  .site-footer {
+    min-height: 1.4rem;
+    padding: 0.18rem 0.75rem;
+    font-size: 0.68rem;
+  }
+
   .site-panel {
     padding: 1rem;
   }
@@ -1037,10 +1075,6 @@ body.loading-modal-open {
 }
 
 @media screen and (max-width: 1023px) {
-  body.has-navbar-fixed-top {
-    padding-top: 9rem;
-  }
-
   .site-navbar .navbar-brand {
     flex: 1 1 auto;
     width: 100%;

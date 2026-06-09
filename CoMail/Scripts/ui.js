@@ -132,6 +132,8 @@ var CoMail;
             viewButton.classList.add("button", "is-link", "is-light", "is-small", "email-view-button");
             viewButton.href = emailHref;
             viewButton.setAttribute("aria-label", "View email: " + email.Subject);
+            viewButton.setAttribute("aria-haspopup", "dialog");
+            viewButton.setAttribute("aria-controls", "EmailView");
 
             var buttonIcon = document.createElement("span");
             buttonIcon.classList.add("icon", "is-small");
@@ -373,13 +375,25 @@ var CoMail;
         var mobileLayout = IsMobileFormerCommissionerLayout();
 
         for (var district = 1; district <= 5; district++) {
-        var districtSection = document.createElement("details");
+            var districtSection = document.createElement("details");
             districtSection.classList.add("former-commissioners__district");
             districtSection.id = "FormerCommissionersDistrict" + district;
             districtSection.open = !mobileLayout;
+            var cardsId = districtSection.id + "Cards";
 
             districtSection.addEventListener("toggle", (function (section) {
                 return function () {
+                    var summary = section.querySelector(".former-commissioners__district-header");
+                    var status = section.querySelector(".former-commissioners__district-status");
+                    if (summary !== null) {
+                        summary.setAttribute("aria-expanded", section.open ? "true" : "false");
+                    }
+                    if (status !== null) {
+                        status.textContent = section.open
+                            ? "expanded, click to collapse section to hide commissioners"
+                            : "collapsed, click to expand section to view commissioners";
+                    }
+
                     if (!IsMobileFormerCommissionerLayout()) {
                         return;
                     }
@@ -390,6 +404,8 @@ var CoMail;
 
             var districtHeader = document.createElement("summary");
             districtHeader.classList.add("former-commissioners__district-header", "former-commissioners__district-summary");
+            districtHeader.setAttribute("aria-controls", cardsId);
+            districtHeader.setAttribute("aria-expanded", districtSection.open ? "true" : "false");
 
             var heading = document.createElement("h3");
             heading.classList.add("title", "is-5", "former-commissioners__district-title");
@@ -405,8 +421,13 @@ var CoMail;
             heading.appendChild(headingDesktop);
             heading.appendChild(headingMobile);
 
+            var status = document.createElement("span");
+            status.classList.add("is-sr-only", "former-commissioners__district-status");
+            status.textContent = districtSection.open
+                ? "expanded, click to collapse section to hide commissioners"
+                : "collapsed, click to expand section to view commissioners";
+
             var cards = document.createElement("div");
-            var cardsId = districtSection.id + "Cards";
             cards.id = cardsId;
             cards.classList.add("columns", "is-multiline", "is-variable", "is-4", "former-commissioners__cards");
 
@@ -420,6 +441,7 @@ var CoMail;
             }
 
             districtHeader.appendChild(heading);
+            districtHeader.appendChild(status);
             districtHeader.appendChild(CreateFormerCommissionerChevron());
             districtSection.appendChild(districtHeader);
             districtSection.appendChild(cards);
@@ -437,12 +459,23 @@ var CoMail;
         var mobileLayout = IsMobileFormerCommissionerLayout();
         for (var i = 0; i < sections.length; i++) {
             var section = sections[i];
+            var summary = section.querySelector(".former-commissioners__district-header");
+            var status = section.querySelector(".former-commissioners__district-status");
             if (mobileLayout) {
                 var isOpen = section.getAttribute("data-mobile-open");
                 section.open = isOpen === null ? false : isOpen === "true";
             }
             else {
                 section.open = true;
+            }
+
+            if (summary !== null) {
+                summary.setAttribute("aria-expanded", section.open ? "true" : "false");
+            }
+            if (status !== null) {
+                status.textContent = section.open
+                    ? "expanded, click to collapse section to hide commissioners"
+                    : "collapsed, click to expand section to view commissioners";
             }
         }
     }
@@ -480,7 +513,7 @@ var CoMail;
             card.classList.add("mailbox-card--commissioner");
         }
         card.href = cardHref;
-        card.setAttribute("aria-label", "View emails for " + mailbox.Name);
+        card.setAttribute("aria-label", BuildMailboxCardLabel(mailbox, sectionKind, isCommissionerCard));
 
         var content = document.createElement("div");
         content.classList.add("card-content", "mailbox-card__content");
@@ -520,6 +553,17 @@ var CoMail;
         return column;
     }
     CoMail.BuildMailboxItem = BuildMailboxItem;
+
+    function BuildMailboxCardLabel(mailbox, sectionKind, isCommissionerCard) {
+        var district = GetMailboxDistrict(mailbox);
+        var districtLabel = district > 0 ? "District " + district : "District";
+
+        if (isCommissionerCard && sectionKind === "former") {
+            return "View emails for Former " + districtLabel + " Commissioner " + mailbox.Name;
+        }
+
+        return "View emails for " + districtLabel + " Commissioner " + mailbox.Name;
+    }
 
     function clearElement(node) {
         if (node === null) {

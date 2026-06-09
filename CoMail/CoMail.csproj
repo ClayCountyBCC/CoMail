@@ -124,6 +124,7 @@
     <Content Include="Scripts\Accessibility\EmailModal.js" />
     <Content Include="Scripts\Configuration\AppConstants.js" />
     <Content Include="Scripts\es6-promise.min.js" />
+    <Content Include="Scripts\SiteState.js" />
     <Content Include="Seal800Transparent.png" />
     <None Include="bundleconfig.json" />
     <None Include="Properties\PublishProfiles\FolderProfile.pubxml" />

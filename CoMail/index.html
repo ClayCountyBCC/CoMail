@@ -5,30 +5,26 @@
   <title>Clay County Public Email</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="View email sent and received by officials in Clay County, Florida." />
+  <meta name="site-version" content="v2.6.1.1234" />
   <link rel="icon" href="Content/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css" />
-  <link rel="stylesheet" href="Content/site/theme.css?v2.5.1.3552" />
+  <link rel="stylesheet" href="Content/site/theme.css?v2.6.1.1234" />
 </head>
 <body class="has-navbar-fixed-top site-body">
-  <a class="skip-link" href="#main-content">Skip to main content</a>
-
   <header>
     <nav class="navbar is-fixed-top site-navbar" aria-label="Primary">
       <div class="navbar-brand">
-        <a class="navbar-item site-brand" href="#" aria-label="Clay County Public Records home">
+        <a id="SiteBrandLink" class="navbar-item site-brand" href="#" aria-label="Clay County Public Records">
           <span class="site-brand__mark" aria-hidden="true">
             <img class="site-brand__seal" src="Seal800Transparent.png" alt="" />
           </span>
           <span class="site-brand__text">Clay County Public Records</span>
         </a>
       </div>
-
-        <div class="navbar-menu is-active">
-        <div class="navbar-end">
-        </div>
-      </div>
     </nav>
   </header>
+
+  <a class="skip-link" href="#main-content">Skip to main content</a>
 
   <div id="Loading" class="loading-modal" role="status" aria-live="polite" aria-atomic="true" hidden>
     <div class="loading-modal__backdrop" aria-hidden="true"></div>
@@ -40,10 +36,10 @@
 
   <main id="main-content" class="section site-main" tabindex="-1">
     <div class="container is-max-desktop">
-      <section id="MailboxList" aria-labelledby="MailboxListHeading" hidden>
+      <section id="MailboxList" aria-labelledby="MailboxListHeading" aria-describedby="MailboxListSubtitle" hidden>
         <div class="intro-card content">
-          <h1 id="MailboxListHeading" class="title is-2">Commissioner email archives</h1>
-          <p class="subtitle is-6">
+          <h1 id="MailboxListHeading" class="title is-2" tabindex="0">Commissioner Email Archives</h1>
+          <p id="MailboxListSubtitle" class="subtitle is-6" tabindex="0">
             Select a mailbox to review public email for current and former commissioners.
           </p>
         </div>
@@ -54,6 +50,7 @@
             class="button is-link is-light is-active mailbox-switcher__button"
             href="#section=county"
             role="tab"
+            aria-controls="CountyCommissionersSection"
             aria-selected="true">
             County Commissioners
           </a>
@@ -62,35 +59,55 @@
             class="button is-link is-light mailbox-switcher__button"
             href="#section=former"
             role="tab"
+            aria-controls="FormerCommissionersSection"
             aria-selected="false">
             Former Commissioners
           </a>
         </div>
 
-        <section class="site-panel commissioner-panel" id="CountyCommissionersSection">
+        <section
+          class="site-panel commissioner-panel"
+          id="CountyCommissionersSection"
+          role="tabpanel"
+          aria-labelledby="CountyCommissionersHeading"
+          aria-describedby="CountyCommissionersDescription">
           <div class="mailbox-header">
-            <h2 class="title is-4">County Commissioners</h2>
-            <p class="subtitle help is-6">Current officeholders and their public mailbox.</p>
+            <h2 id="CountyCommissionersHeading" class="title is-4" tabindex="0">County Commissioners</h2>
+            <p id="CountyCommissionersDescription" class="subtitle help is-6" tabindex="0">Current officeholders and their public mailbox.</p>
           </div>
           <div id="Commissioners" class="columns is-multiline is-variable is-4"></div>
         </section>
 
-        <section class="site-panel commissioner-panel" id="FormerCommissionersSection" hidden>
+        <section
+          class="site-panel commissioner-panel"
+          id="FormerCommissionersSection"
+          role="tabpanel"
+          aria-labelledby="FormerCommissionersHeading"
+          aria-describedby="FormerCommissionersDescription"
+          hidden>
           <div class="mailbox-header">
-            <h2 class="title is-4">Former Commissioners</h2>
-            <h3 class="subtitle help is-6">Past commissioners remain available for public review.</h3>
+            <h2 id="FormerCommissionersHeading" class="title is-4" tabindex="0">Former Commissioners</h2>
+            <h3 id="FormerCommissionersDescription" class="subtitle help is-6" tabindex="0">Past commissioners remain available for public review.</h3>
           </div>
           <div id="FormerCommissioners" class="former-commissioners"></div>
         </section>
 
-        <section class="site-panel" id="OtherPublicSection">
+        <section
+          class="site-panel"
+          id="OtherPublicSection"
+          aria-labelledby="OtherPublicHeading"
+          aria-describedby="OtherPublicDescription">
           <div class="mailbox-header">
-            <h2 class="title is-4">Other Public Mailboxes</h2>
-            <h3 class="subtitle help is-6">
+            <h2 id="OtherPublicHeading" class="title is-4" tabindex="0">Other Public Mailboxes</h2>
+            <h3 id="OtherPublicDescription" class="subtitle help is-6" tabindex="0">
               Administrative accounts are handled through public records requests.
             </h3>
           </div>
-          <div class="notification is-info is-light mailbox-note">
+          <div
+            class="notification is-info is-light mailbox-note"
+            tabindex="0"
+            role="note"
+            aria-label="The County Manager, Deputy County Manager, and Assistant County Managers' emails can be obtained through a public records request. You can make that request by emailing publicrecords@claycountygov.com.">
             The County Manager, Deputy County Manager, and Assistant County Managers' emails
             can be obtained through a public records request. You can make that request by
             emailing
@@ -100,11 +117,11 @@
         </section>
       </section>
 
-      <section id="MailboxView" class="mailbox-archive" aria-labelledby="MailboxName" hidden>
+      <section id="MailboxView" class="mailbox-archive" aria-labelledby="MailboxName" aria-describedby="MailboxViewDescription" hidden>
         <div class="mailbox-archive__shell site-panel">
           <div class="mailbox-archive__actions">
-            <div class="mailbox-return">
-              <a id="ReturnToSection" class="button is-text is-small" href="#section=county">
+          <div class="mailbox-return">
+              <a id="ReturnToSection" class="button is-text" href="#section=county">
                 Return to County Commissioners
               </a>
             </div>
@@ -127,8 +144,11 @@
               <div class="level-left">
                 <div>
                   <p class="eyebrow">Mailbox archive</p>
-                  <h2 id="MailboxName" class="title is-3"></h2>
+                  <h1 id="MailboxName" class="title is-3" tabindex="-1"></h1>
                   <p id="TotalPageCount" class="help" aria-live="polite" aria-atomic="true"></p>
+                  <p id="MailboxViewDescription" class="is-sr-only">
+                    Use the previous and next buttons to move between email pages. Use the return link to go back to the commissioner list.
+                  </p>
                 </div>
               </div>
               <div class="level-right">
@@ -167,7 +187,7 @@
     <div class="modal-background" data-email-modal-close></div>
     <div class="modal-card email-modal-card">
       <header class="modal-card-head">
-        <p id="EmailModalTitle" class="modal-card-title">Email Details</p>
+        <h2 id="EmailModalTitle" class="modal-card-title">Email Details</h2>
         <button
           class="delete"
           type="button"
@@ -215,6 +235,11 @@
     </div>
   </div>
 
+  <footer id="SiteFooter" class="site-footer" aria-label="Published site version">
+    <span id="SiteVersion" class="site-footer__version">Version unavailable</span>
+  </footer>
+
+  <script src="Scripts/SiteState.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       var request = new XMLHttpRequest();
@@ -224,6 +249,7 @@
         if (request.status >= 200 && request.status < 300 && request.responseText) {
           try {
             var siteState = JSON.parse(request.responseText);
+            CoMail.ApplySiteState(siteState);
             if (siteState && siteState.MaintenanceMode) {
               window.location.replace("Maintenance.html");
               return;
@@ -242,6 +268,6 @@
       request.send();
     });
   </script>
-  <script src="Scripts/bundle.min.js?v2.5.1.3552"></script>
+  <script src="Scripts/bundle.min.js?v2.6.1.1234"></script>
 </body>
 </html>

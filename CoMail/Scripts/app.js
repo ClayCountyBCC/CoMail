@@ -16,6 +16,10 @@ var CoMail;
         window.onhashchange = HashChange;
         window.addEventListener("resize", ViewportChanged);
         GetMailBoxes();
+
+        if (location.hash.substring(1).length === 0) {
+            FocusBrandLink();
+        }
     }
     CoMail.Start = Start;
 
@@ -75,6 +79,7 @@ var CoMail;
 
             if (lh.EmailId < 0) {
                 CoMail.CloseEmailModal();
+                FocusMailboxName();
             }
         }
 
@@ -111,6 +116,46 @@ var CoMail;
 
         if (!wideLayout) {
             window.scrollTo(0, 0);
+        }
+    }
+
+    function FocusMailboxName() {
+        var mailboxName = document.getElementById("MailboxName");
+        if (mailboxName === null || typeof mailboxName.focus !== "function") {
+            return;
+        }
+
+        try {
+            mailboxName.focus({ preventScroll: true });
+        }
+        catch (err) {
+            mailboxName.focus();
+        }
+    }
+
+    function FocusBrandLink() {
+        var brandLink = document.getElementById("SiteBrandLink");
+        if (brandLink === null || typeof brandLink.focus !== "function") {
+            return;
+        }
+
+        if (typeof window.requestAnimationFrame === "function") {
+            window.requestAnimationFrame(function () {
+                try {
+                    brandLink.focus({ preventScroll: true });
+                }
+                catch (err) {
+                    brandLink.focus();
+                }
+            });
+            return;
+        }
+
+        try {
+            brandLink.focus({ preventScroll: true });
+        }
+        catch (err) {
+            brandLink.focus();
         }
     }
 
@@ -286,5 +331,14 @@ var CoMail;
     function SetLoadingModalState(isOpen) {
         document.body.classList.toggle("loading-modal-open", isOpen);
         document.documentElement.classList.toggle("loading-modal-open", isOpen);
+        var main = document.getElementById("main-content");
+        if (main !== null) {
+            if (isOpen) {
+                main.setAttribute("aria-busy", "true");
+            }
+            else {
+                main.removeAttribute("aria-busy");
+            }
+        }
     }
 })(CoMail || (CoMail = {}));
