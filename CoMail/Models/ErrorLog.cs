@@ -53,7 +53,9 @@ namespace CoMail.Models
       {
         using (IDbConnection db = new SqlConnection(Database.GetConnectionString(Database.LogConnectionName)))
         {
-          db.Execute(sql, this);
+          db.Execute(
+            sql,
+            this);
         }
       }
       catch

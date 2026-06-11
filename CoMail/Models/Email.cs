@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
-using System.Text;
 using Dapper;
 using CoMail.Infrastructure;
 
@@ -11,6 +11,7 @@ namespace CoMail.Models
   {
     private const int PageSize = 20;
     private List<Attachment> _attachments = new List<Attachment>();
+    private bool _usePublicVisibilityRules = true;
 
     public long Id { get; set; }
     public int OriginalId { get; set; }
@@ -50,7 +51,7 @@ namespace CoMail.Models
       {
         if (_attachments.Count == 0 && AttachmentCount > 0)
         {
-          _attachments = Attachment.Get(Id) ?? new List<Attachment>();
+          _attachments = Attachment.Get(Id, _usePublicVisibilityRules) ?? new List<Attachment>();
         }
 
         return _attachments;
@@ -62,73 +63,80 @@ namespace CoMail.Models
 
     }
 
-    public static List<Email> Get(
-      int personId,
-      int page = 0,
-      string subject = "",
-      string from = "")
-    {
-      DynamicParameters parameters = BuildSearchParameters(personId, page, subject, from);
-      string query = BuildEmailQuery(false, subject, from);
-      return FilterVisibleEmails(Database.Query<Email>(query, parameters));
-    }
-
-    public static Email Get(long emailId)
+    public static Email Get(long emailId, bool usePublicVisibilityRules = true)
     {
       DynamicParameters parameters = new DynamicParameters();
       parameters.Add("@EmailId", emailId);
 
-      string query = @"
-        SELECT 
-          id Id,
-          fromAddress 'From',
-          toAddress 'To',
-          ccAddress CC,
-          originalArcId OriginalId,
-          dateReceived DateReceived,
-          dateSent DateSent,
-          subject Subject,
-          body Body,
-          attachmentCount AttachmentCount,
-          ignore Ignore
-        FROM email
-        WHERE 
-          ignore = 0 AND
-          id = @EmailId;";
+      if (!usePublicVisibilityRules)
+      {
+        parameters.Add("@UsePublicVisibilityRules", false);
+      }
 
-      return FilterVisibleEmail(Database.QuerySingleOrDefault<Email>(query, parameters));
+      Email email = Database.QuerySingleOrDefault<Email>(
+        "dbo.GetEmail",
+        parameters,
+        commandType: CommandType.StoredProcedure);
+      SetVisibilityRules(email == null ? null : new[] { email }, usePublicVisibilityRules);
+      return FilterVisibleEmail(email, usePublicVisibilityRules);
     }
 
     public static List<Email> GetShort(
       int personId,
       int page = 0,
       string subject = "",
-      string from = "")
+      string from = "",
+      bool usePublicVisibilityRules = true)
     {
-      DynamicParameters parameters = BuildSearchParameters(personId, page, subject, from);
-      string query = BuildEmailQuery(true, subject, from);
-      return FilterVisibleEmails(Database.Query<Email>(query, parameters));
+      DynamicParameters parameters = BuildSearchParameters(personId, page, subject, from, usePublicVisibilityRules);
+      List<Email> emails = Database.Query<Email>(
+        "dbo.GetEmailList",
+        parameters,
+        commandType: CommandType.StoredProcedure);
+      SetVisibilityRules(emails, usePublicVisibilityRules);
+      return FilterVisibleEmails(emails, usePublicVisibilityRules);
     }
 
     public static int GetCount(
       int personId,
       string subject = "",
-      string from = "")
+      string from = "",
+      bool usePublicVisibilityRules = true)
     {
-      DynamicParameters parameters = BuildCountParameters(personId, subject, from);
-      string query = BuildCountQuery(subject, from);
-      return Database.ScalarInt(query, parameters);
+      DynamicParameters parameters = BuildCountParameters(personId, subject, from, usePublicVisibilityRules);
+      return Database.ScalarInt(
+        "dbo.GetEmailCount",
+        parameters,
+        commandType: CommandType.StoredProcedure);
+    }
+
+    public static int SetIgnoreFamily(long emailId, bool ignore)
+    {
+      DynamicParameters parameters = new DynamicParameters();
+      parameters.Add("@EmailId", emailId);
+      parameters.Add("@Ignore", ignore);
+
+      return Database.ScalarInt(
+        "dbo.UpdateEmailIgnoreFamily",
+        parameters,
+        commandType: CommandType.StoredProcedure);
     }
 
     private static DynamicParameters BuildSearchParameters(
       int personId,
       int page,
       string subject,
-      string from)
+      string from,
+      bool usePublicVisibilityRules)
     {
       DynamicParameters parameters = new DynamicParameters();
       parameters.Add("@PersonId", personId);
       parameters.Add("@Page", Math.Max(page, 0) * PageSize);
+
+      if (!usePublicVisibilityRules)
+      {
+        parameters.Add("@UsePublicVisibilityRules", false);
+      }
 
       if (!string.IsNullOrWhiteSpace(subject))
       {
@@ -146,10 +154,16 @@ namespace CoMail.Models
     private static DynamicParameters BuildCountParameters(
       int personId,
       string subject,
-      string from)
+      string from,
+      bool usePublicVisibilityRules)
     {
       DynamicParameters parameters = new DynamicParameters();
       parameters.Add("@PersonId", personId);
+
+      if (!usePublicVisibilityRules)
+      {
+        parameters.Add("@UsePublicVisibilityRules", false);
+      }
 
       if (!string.IsNullOrWhiteSpace(subject))
       {
@@ -164,104 +178,55 @@ namespace CoMail.Models
       return parameters;
     }
 
-    internal static List<Email> FilterVisibleEmails(IEnumerable<Email> emails)
+    private void SetVisibilityRules(bool usePublicVisibilityRules)
+    {
+      _usePublicVisibilityRules = usePublicVisibilityRules;
+    }
+
+    private static void SetVisibilityRules(IEnumerable<Email> emails, bool usePublicVisibilityRules)
+    {
+      if (emails == null)
+      {
+        return;
+      }
+
+      foreach (Email email in emails)
+      {
+        if (email != null)
+        {
+          email.SetVisibilityRules(usePublicVisibilityRules);
+        }
+      }
+    }
+
+    internal static List<Email> FilterVisibleEmails(IEnumerable<Email> emails, bool usePublicVisibilityRules = true)
     {
       if (emails == null)
       {
         return new List<Email>();
       }
 
+      if (!usePublicVisibilityRules)
+      {
+        return emails.Where(email => email != null).ToList();
+      }
+
       return emails.Where(email => email != null && !email.Ignore).ToList();
     }
 
-    internal static Email FilterVisibleEmail(Email email)
+    internal static Email FilterVisibleEmail(Email email, bool usePublicVisibilityRules = true)
     {
-      if (email == null || email.Ignore)
+      if (email == null)
+      {
+        return null;
+      }
+
+      if (usePublicVisibilityRules && email.Ignore)
       {
         return null;
       }
 
       return email;
-    }
-
-    internal static string BuildEmailQuery(
-      bool shortView,
-      string subject,
-      string from)
-    {
-      StringBuilder sql = new StringBuilder();
-      sql.AppendLine("SELECT");
-      sql.AppendLine("  E.id Id,");
-      sql.AppendLine("  fromAddress 'From',");
-
-      if (shortView)
-      {
-        sql.AppendLine("  '' 'To',");
-        sql.AppendLine("  '' CC,");
-        sql.AppendLine("  0 OriginalId,");
-      }
-      else
-      {
-        sql.AppendLine("  toAddress 'To',");
-        sql.AppendLine("  ccAddress CC,");
-        sql.AppendLine("  originalArcId OriginalId,");
-      }
-
-      sql.AppendLine("  dateReceived DateReceived,");
-      sql.AppendLine("  dateSent DateSent,");
-      sql.AppendLine("  subject Subject,");
-      sql.AppendLine(shortView ? "  '' Body," : "  body Body,");
-      sql.AppendLine("  attachmentCount AttachmentCount,");
-      sql.AppendLine("  E.ignore Ignore");
-      sql.AppendLine("FROM email E");
-      sql.AppendLine("INNER JOIN emailMailboxLookup EML ON E.id = EML.emailId");
-      sql.AppendLine("INNER JOIN person P ON P.id = EML.personId");
-      sql.AppendLine("WHERE");
-      sql.AppendLine("  E.ignore = 0 AND");
-      sql.AppendLine("  P.id = @PersonId");
-      sql.Append(BuildSearchFilter(subject, from));
-      sql.AppendLine("ORDER BY E.dateReceived DESC");
-      sql.AppendLine("OFFSET @Page ROWS FETCH NEXT " + PageSize + " ROWS ONLY;");
-
-      return sql.ToString();
-    }
-
-    internal static string BuildCountQuery(string subject, string from)
-    {
-      StringBuilder sql = new StringBuilder();
-      sql.AppendLine("SELECT");
-      sql.AppendLine("  COUNT(*)");
-      sql.AppendLine("FROM email E");
-      sql.AppendLine("INNER JOIN emailMailboxLookup EML ON E.id = EML.emailId");
-      sql.AppendLine("INNER JOIN person P ON P.id = EML.personId");
-      sql.AppendLine("WHERE");
-      sql.AppendLine("  E.ignore = 0 AND");
-      sql.AppendLine("  P.id = @PersonId");
-      sql.Append(BuildSearchFilter(subject, from));
-      sql.Append(";");
-      return sql.ToString();
-    }
-
-    internal static string BuildSearchFilter(string subject, string from)
-    {
-      List<string> filters = new List<string>();
-
-      if (!string.IsNullOrWhiteSpace(subject))
-      {
-        filters.Add("  AND subject LIKE '%' + @Subject + '%'");
-      }
-
-      if (!string.IsNullOrWhiteSpace(from))
-      {
-        filters.Add("  AND fromAddress LIKE '%' + @From + '%'");
-      }
-
-      if (filters.Count == 0)
-      {
-        return string.Empty;
-      }
-
-      return Environment.NewLine + string.Join(Environment.NewLine, filters);
     }
   }
 }

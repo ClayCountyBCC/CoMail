@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Generic;
+using System.Data;
 using CoMail.Infrastructure;
 
 namespace CoMail.Models
@@ -13,7 +13,6 @@ namespace CoMail.Models
     public string MailboxName { get; set; }
     public int District { get; set; }
     public int FinalTermYear { get; set; }
-
 
     public PublicMailBox(int Id, string Title, string Name, int Active)
     {
@@ -30,25 +29,9 @@ namespace CoMail.Models
 
     public static List<PublicMailBox> Get()
     {
-      string sql = @"
-        SELECT 
-          id Id,
-          title Title,
-          name Name,
-          mailboxName MailboxName,
-          active Active,
-          district District,
-          finalTermYear FinalTermYear
-        FROM person P
-        WHERE EXISTS (
-          SELECT 1
-          FROM emailMailboxLookup EML
-          WHERE EML.personId = P.id
-        )
-        ORDER BY title ASC, finalTermYear DESC;";
-
-      return Database.Query<PublicMailBox>(sql);
+      return Database.Query<PublicMailBox>(
+        "dbo.GetPublicMailBoxes",
+        commandType: CommandType.StoredProcedure);
     }
-
   }
 }

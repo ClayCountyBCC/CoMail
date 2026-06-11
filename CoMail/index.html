@@ -5,10 +5,10 @@
   <title>Clay County Public Email</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="View email sent and received by officials in Clay County, Florida." />
-  <meta name="site-version" content="v2.6.1.1234" />
+  <meta name="site-version" content="v2.7.1.1237" />
   <link rel="icon" href="Content/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css" />
-  <link rel="stylesheet" href="Content/site/theme.css?v2.6.1.1234" />
+  <link rel="stylesheet" href="Content/site/theme.css?v2.7.1.1237" />
 </head>
 <body class="has-navbar-fixed-top site-body">
   <header>
@@ -163,8 +163,11 @@
               </div>
             </div>
 
+            <p id="EmailListDescription" class="is-sr-only">
+              Public email list for the selected mailbox. Move through the email rows or use the open action to review the full message. On smaller screens, the from and open columns are hidden.
+            </p>
             <div class="table-container">
-              <table class="table is-fullwidth is-narrow email-table">
+              <table class="table is-fullwidth is-narrow email-table" aria-describedby="EmailListDescription">
                 <caption class="is-sr-only">Public emails in the selected mailbox</caption>
                 <thead>
                   <tr>
@@ -188,6 +191,9 @@
     <div class="modal-card email-modal-card">
       <header class="modal-card-head">
         <h2 id="EmailModalTitle" class="modal-card-title">Email Details</h2>
+        <p id="EmailModalDescription" class="is-sr-only">
+          Review the email details and message content. If available, use the ignore family button to hide or restore the current email family. Use the close button or the Escape key to return to the mailbox list.
+        </p>
         <button
           class="delete"
           type="button"
@@ -226,11 +232,12 @@
 
         <section class="email-message-section">
           <h3 class="title is-5">Message</h3>
-          <div id="EmailMessage" class="content email-message"></div>
+          <div id="EmailMessage" class="content email-message" role="document" aria-label="Email message"></div>
         </section>
       </section>
       <footer class="modal-card-foot">
-        <button type="button" class="button is-link" data-email-modal-close>Close</button>
+        <button id="EmailIgnoreAction" type="button" class="button is-warning is-light" hidden disabled>Ignore family</button>
+        <button type="button" class="button is-link email-modal-card__close" data-email-modal-close>Close</button>
       </footer>
     </div>
   </div>
@@ -250,7 +257,7 @@
           try {
             var siteState = JSON.parse(request.responseText);
             CoMail.ApplySiteState(siteState);
-            if (siteState && siteState.MaintenanceMode) {
+            if (siteState && siteState.MaintenanceMode && !siteState.CanManageMaintenance) {
               window.location.replace("Maintenance.html");
               return;
             }
@@ -268,6 +275,6 @@
       request.send();
     });
   </script>
-  <script src="Scripts/bundle.min.js?v2.6.1.1234"></script>
+  <script src="Scripts/bundle.min.js?v2.7.1.1237"></script>
 </body>
 </html>

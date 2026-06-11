@@ -15,9 +15,9 @@
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <UseIISExpress>true</UseIISExpress>
     <IISExpressSSLPort />
-    <IISExpressAnonymousAuthentication />
-    <IISExpressWindowsAuthentication />
-    <IISExpressUseClassicPipelineMode />
+    <IISExpressAnonymousAuthentication>disabled</IISExpressAnonymousAuthentication>
+    <IISExpressWindowsAuthentication>enabled</IISExpressWindowsAuthentication>
+    <IISExpressUseClassicPipelineMode>false</IISExpressUseClassicPipelineMode>
     <UseGlobalApplicationHostFile />
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
@@ -149,6 +149,7 @@
     <Compile Include="Infrastructure\Caching\CacheStore.cs" />
     <Compile Include="Infrastructure\Data\Database.cs" />
     <Compile Include="Infrastructure\Lookups\MailboxLookup.cs" />
+    <Compile Include="Infrastructure\Security\AppSecurity.cs" />
     <Compile Include="Infrastructure\Services\AttachmentProxyClient.cs" />
     <Compile Include="Infrastructure\Services\MailboxEmailService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -164,18 +165,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
-    <Folder Include="Content\site\" />
-    <Folder Include="Content\vendor\" />
-    <Folder Include="Content\vendor\fontawesome\" />
-    <Folder Include="Content\vendor\fontawesome\css\" />
-    <Folder Include="Content\vendor\fontawesome\webfonts\" />
-    <Folder Include="Infrastructure\" />
-    <Folder Include="Infrastructure\Caching\" />
-    <Folder Include="Infrastructure\Data\" />
-    <Folder Include="Infrastructure\Lookups\" />
-    <Folder Include="Infrastructure\Services\" />
-    <Folder Include="Scripts\Accessibility\" />
-    <Folder Include="Scripts\Configuration\" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />
@@ -196,7 +185,7 @@
           <DevelopmentServerPort>65448</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
           <IISUrl>http://localhost:65448/</IISUrl>
-          <NTLMAuthentication>False</NTLMAuthentication>
+          <NTLMAuthentication>True</NTLMAuthentication>
           <UseCustomServer>False</UseCustomServer>
           <CustomServerUrl>
           </CustomServerUrl>

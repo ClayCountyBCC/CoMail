@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http;
 using System.Web.Http;
 using System.Web.Http.Results;
+using CoMail.Infrastructure.Security;
 using CoMail.Models;
 
 namespace CoMail.Infrastructure
@@ -58,9 +59,11 @@ namespace CoMail.Infrastructure
       string subject,
       string from)
     {
+      bool usePublicVisibilityRules = !AppSecurity.IsInternalUser();
+
       return HasFilters(subject, from)
-        ? Email.GetShort(personId, page, subject, from)
-        : Email.GetShort(personId, page);
+        ? Email.GetShort(personId, page, subject, from, usePublicVisibilityRules)
+        : Email.GetShort(personId, page, string.Empty, string.Empty, usePublicVisibilityRules);
     }
 
     private static int? GetCount(
@@ -68,9 +71,10 @@ namespace CoMail.Infrastructure
       string subject,
       string from)
     {
+      bool usePublicVisibilityRules = !AppSecurity.IsInternalUser();
       int count = HasFilters(subject, from)
-        ? Email.GetCount(personId, subject, from)
-        : Email.GetCount(personId);
+        ? Email.GetCount(personId, subject, from, usePublicVisibilityRules)
+        : Email.GetCount(personId, string.Empty, string.Empty, usePublicVisibilityRules);
 
       return count >= 0 ? (int?)count : null;
     }

@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Generic;
+using System.Data;
 using Dapper;
 using CoMail.Infrastructure;
 
@@ -24,28 +24,26 @@ namespace CoMail.Models
         return $"API/File?id={MailId}&Guid={Guid}&AttachmentId={AttachmentId}";
       }
     }
+
     public Attachment()
     {
 
     }
 
-    public static List<Attachment> Get(long MailId)
+    public static List<Attachment> Get(long mailId, bool usePublicVisibilityRules = true)
     {
-      var dp = new DynamicParameters();
-      dp.Add("@mId", MailId);
-      string query = @"
-        SELECT
-          E.originalArcId MailId,
-          G.[guid] Guid,
-          size Size,
-          attId AttachmentId,
-          filename Filename
-        FROM attachments A
-        INNER JOIN email E ON A.emailId = E.id
-        INNER JOIN guidLookup G ON E.guidId = G.id
-        WHERE A.emailId = @mId
-        ORDER BY A.attId ASC";
-      return Database.Query<Attachment>(query, dp);
+      DynamicParameters parameters = new DynamicParameters();
+      parameters.Add("@MailId", mailId);
+
+      if (!usePublicVisibilityRules)
+      {
+        parameters.Add("@UsePublicVisibilityRules", false);
+      }
+
+      return Database.Query<Attachment>(
+        "dbo.GetAttachmentsForEmail",
+        parameters,
+        commandType: CommandType.StoredProcedure);
     }
   }
 }
