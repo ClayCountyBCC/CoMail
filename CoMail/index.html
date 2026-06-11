@@ -5,10 +5,10 @@
   <title>Clay County Public Email</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="View email sent and received by officials in Clay County, Florida." />
-  <meta name="site-version" content="v2.7.1.1237" />
+  <meta name="site-version" content="v2.7.1.1245" />
   <link rel="icon" href="Content/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css" />
-  <link rel="stylesheet" href="Content/site/theme.css?v2.7.1.1237" />
+  <link rel="stylesheet" href="Content/site/theme.css?v2.7.1.1245" />
 </head>
 <body class="has-navbar-fixed-top site-body">
   <header>
@@ -236,7 +236,7 @@
         </section>
       </section>
       <footer class="modal-card-foot">
-        <button id="EmailIgnoreAction" type="button" class="button is-warning is-light" hidden disabled>Ignore family</button>
+        <button id="EmailIgnoreAction" type="button" class="button is-warning email-modal-card__ignore" hidden disabled>Ignore family</button>
         <button type="button" class="button is-link email-modal-card__close" data-email-modal-close>Close</button>
       </footer>
     </div>
@@ -246,12 +246,15 @@
     <span id="SiteVersion" class="site-footer__version">Version unavailable</span>
   </footer>
 
-  <script src="Scripts/SiteState.js"></script>
+  <script src="Scripts/SiteState.js?v2.7.1.1245"></script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       var request = new XMLHttpRequest();
-      request.open("GET", "API/SiteState", true);
+      request.open("GET", "API/SiteState?cb=" + Date.now().toString(), true);
       request.setRequestHeader("Accept", "application/json");
+      request.setRequestHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      request.setRequestHeader("Pragma", "no-cache");
+      request.setRequestHeader("Expires", "0");
       request.onload = function () {
         if (request.status >= 200 && request.status < 300 && request.responseText) {
           try {
@@ -275,6 +278,6 @@
       request.send();
     });
   </script>
-  <script src="Scripts/bundle.min.js?v2.7.1.1237"></script>
+  <script src="Scripts/bundle.min.js?v2.7.1.1245"></script>
 </body>
 </html>

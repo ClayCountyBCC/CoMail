@@ -629,6 +629,8 @@ var CoMail;
 var CoMail;
 (function (CoMail) {
     function BuildEmailView(e) {
+        var attachments = e.Attachments || [];
+
         SetValue("EmailSubject", e.Subject);
         SetValue("EmailDateReceived", e.DateReceived_ToString);
         SetValue("EmailFrom", e.From);
@@ -644,16 +646,177 @@ var CoMail;
 
             var parser = new DOMParser();
             var parsed = parser.parseFromString(e.Body || "", "text/html");
+            if (parsed.body !== null && parsed.body.innerHTML.length > 0) {
+                ResolveInlineCidImages(parsed.body, attachments);
+            }
+
             var html = parsed.body !== null && parsed.body.innerHTML.length > 0 ? parsed.body.innerHTML : (e.Body || "");
             bodyWrapper.innerHTML = html;
 
             emailMessage.appendChild(bodyWrapper);
         }
 
-        AddAttachments(e.Attachments || []);
+        AddAttachments(attachments);
         ConfigureEmailIgnoreAction(e, false);
     }
     CoMail.BuildEmailView = BuildEmailView;
+
+    function ResolveInlineCidImages(root, attachments) {
+        if (root === null || root === undefined || attachments === null || attachments === undefined || attachments.length === 0) {
+            ReplaceUnmatchedCidImages(root);
+            return;
+        }
+
+        var images = root.querySelectorAll("img[src]");
+        for (var i = 0; i < images.length; i++) {
+            var image = images[i];
+            var src = image.getAttribute("src") || "";
+            if (!IsCidUrl(src)) {
+                continue;
+            }
+
+            var attachment = FindAttachmentForCid(src, attachments);
+            if (attachment === null) {
+                ReplaceCidImageWithPlaceholder(image);
+                continue;
+            }
+
+            ConvertCidImageToThumbnail(image, attachment);
+        }
+    }
+
+    function ReplaceUnmatchedCidImages(root) {
+        if (root === null || root === undefined) {
+            return;
+        }
+
+        var images = root.querySelectorAll("img[src]");
+        for (var i = 0; i < images.length; i++) {
+            var image = images[i];
+            var src = image.getAttribute("src") || "";
+            if (IsCidUrl(src)) {
+                ReplaceCidImageWithPlaceholder(image);
+            }
+        }
+    }
+
+    function IsCidUrl(src) {
+        return typeof src === "string" && src.toLowerCase().indexOf("cid:") === 0;
+    }
+
+    function FindAttachmentForCid(src, attachments) {
+        var cidFilename = NormalizeCidFilename(src);
+        if (cidFilename.length === 0) {
+            return null;
+        }
+
+        for (var i = 0; i < attachments.length; i++) {
+            var attachment = attachments[i];
+            if (NormalizeFilename(attachment.Filename) === cidFilename) {
+                return attachment;
+            }
+        }
+
+        return null;
+    }
+
+    function NormalizeCidFilename(src) {
+        var value = src.substring(4).replace(/[<>]/g, "").trim();
+        try {
+            value = decodeURIComponent(value);
+        }
+        catch (err) {
+            // Keep the original CID if it was not URL encoded.
+        }
+
+        var atIndex = value.indexOf("@");
+        if (atIndex > -1) {
+            value = value.substring(0, atIndex);
+        }
+
+        return NormalizeFilename(value);
+    }
+
+    function NormalizeFilename(filename) {
+        if (filename === null || filename === undefined) {
+            return "";
+        }
+
+        var value = filename.toString().trim().toLowerCase();
+        var slashIndex = Math.max(value.lastIndexOf("/"), value.lastIndexOf("\\"));
+        if (slashIndex > -1) {
+            value = value.substring(slashIndex + 1);
+        }
+
+        return value;
+    }
+
+    function ConvertCidImageToThumbnail(image, attachment) {
+        image.setAttribute("src", attachment.URL);
+        image.classList.add("email-inline-image");
+        image.setAttribute("loading", "lazy");
+        image.setAttribute("decoding", "async");
+        image.setAttribute("title", attachment.Filename);
+
+        if ((image.getAttribute("alt") || "").trim().length === 0) {
+            image.setAttribute("alt", "Inline image: " + attachment.Filename);
+        }
+
+        var existingLink = FindAncestorLink(image);
+        if (existingLink !== null) {
+            ConfigureInlineImageLink(existingLink, attachment);
+            return;
+        }
+
+        var document = image.ownerDocument;
+        var parent = image.parentNode;
+        if (document === null || parent === null) {
+            return;
+        }
+
+        var link = document.createElement("a");
+        ConfigureInlineImageLink(link, attachment);
+        parent.replaceChild(link, image);
+        link.appendChild(image);
+    }
+
+    function ConfigureInlineImageLink(link, attachment) {
+        link.href = attachment.URL;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.classList.add("email-inline-image-link");
+        link.setAttribute("aria-label", "Open inline image " + attachment.Filename + " in a new window");
+    }
+
+    function FindAncestorLink(element) {
+        var current = element.parentNode;
+        while (current !== null) {
+            if (current.tagName !== undefined && current.tagName.toLowerCase() === "a") {
+                return current;
+            }
+
+            current = current.parentNode;
+        }
+
+        return null;
+    }
+
+    function ReplaceCidImageWithPlaceholder(image) {
+        var document = image.ownerDocument;
+        var parent = image.parentNode;
+        if (document === null || parent === null) {
+            image.removeAttribute("src");
+            image.setAttribute("alt", "Inline image unavailable");
+            return;
+        }
+
+        var placeholder = document.createElement("span");
+        placeholder.classList.add("email-inline-image-placeholder");
+        placeholder.setAttribute("role", "img");
+        placeholder.setAttribute("aria-label", "Inline image unavailable");
+        placeholder.textContent = "Inline image unavailable";
+        parent.replaceChild(placeholder, image);
+    }
 
     function ConfigureEmailIgnoreAction(email, isBusy) {
         var button = document.getElementById("EmailIgnoreAction");

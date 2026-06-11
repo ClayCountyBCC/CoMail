@@ -11,6 +11,8 @@
 *.userprefs
 ConnectionStrings.config
 CoMail/ConnectionStrings.config
+ConnectionStrings.Local.config
+CoMail/ConnectionStrings.Local.config
 
 # Build results
 [Dd]ebug/

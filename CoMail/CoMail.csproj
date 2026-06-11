@@ -150,6 +150,7 @@
     <Compile Include="Infrastructure\Data\Database.cs" />
     <Compile Include="Infrastructure\Lookups\MailboxLookup.cs" />
     <Compile Include="Infrastructure\Security\AppSecurity.cs" />
+    <Compile Include="Infrastructure\Security\AppSecurityDiagnostics.cs" />
     <Compile Include="Infrastructure\Services\AttachmentProxyClient.cs" />
     <Compile Include="Infrastructure\Services\MailboxEmailService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

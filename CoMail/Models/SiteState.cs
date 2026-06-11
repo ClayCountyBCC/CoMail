@@ -17,6 +17,7 @@ namespace CoMail.Models
     public bool IsInternalUser { get; set; }
     public bool CanManageMaintenance { get; set; }
     public bool CanManageIgnoredEmails { get; set; }
+    public AppSecurityDiagnostics SecurityDiagnostics { get; set; }
 
     public static SiteState Get()
     {
@@ -26,9 +27,13 @@ namespace CoMail.Models
 
       state = state ?? new SiteState();
       bool isInternalUser = AppSecurity.IsInternalUser();
+
       state.IsInternalUser = isInternalUser;
-      state.CanManageMaintenance = isInternalUser;
-      state.CanManageIgnoredEmails = isInternalUser;
+      state.CanManageMaintenance = isInternalUser && AppSecurity.CanManageMaintenance();
+      state.CanManageIgnoredEmails = isInternalUser && AppSecurity.CanManageIgnoredEmails();
+      state.SecurityDiagnostics = AppSecurity.IsPublic()
+        ? null
+        : AppSecurity.GetDiagnostics();
       return state;
     }
   }
