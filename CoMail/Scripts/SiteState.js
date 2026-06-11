@@ -1,10 +1,23 @@
 var CoMail;
 (function (CoMail) {
     function ApplySiteState(siteState) {
+        CoMail.siteState = siteState || null;
+        UpdateModeState(siteState);
         UpdateSiteVersion(siteState);
         UpdateMaintenanceMessage(siteState);
     }
     CoMail.ApplySiteState = ApplySiteState;
+
+    function UpdateModeState(siteState) {
+        var body = document.body;
+        if (body === null) {
+            return;
+        }
+
+        var isInternal = siteState !== null && siteState.IsInternalUser === true;
+        body.classList.toggle("is-internal-user", isInternal);
+        body.dataset.siteMode = isInternal ? "internal" : "public";
+    }
 
     function UpdateSiteVersion(siteState) {
         var version = document.getElementById("SiteVersion");

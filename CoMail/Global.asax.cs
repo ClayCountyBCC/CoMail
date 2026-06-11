@@ -1,6 +1,8 @@
 using System;
 using System.Web;
 using System.Web.Http;
+using System.Threading;
+using CoMail.Infrastructure.Security;
 using CoMail.Models;
 
 namespace CoMail
@@ -12,8 +14,13 @@ namespace CoMail
             GlobalConfiguration.Configure(WebApiConfig.Register);
         }
 
-        protected void Application_BeginRequest()
+        protected void Application_PostAuthenticateRequest()
         {
+            if (Context?.User != null)
+            {
+                Thread.CurrentPrincipal = Context.User;
+            }
+
             if (!ShouldServeMaintenancePage())
             {
                 return;
@@ -31,7 +38,9 @@ namespace CoMail
             }
 
             SiteState state = SiteState.Get();
-            return state != null && state.MaintenanceMode;
+            return state != null &&
+                state.MaintenanceMode &&
+                !state.CanManageMaintenance;
         }
 
         private static bool IsRootDocumentRequest()

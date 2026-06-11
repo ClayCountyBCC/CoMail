@@ -310,6 +310,19 @@ var CoMail;
         });
     };
 
+    Email.prototype.SetIgnoreFamily = function (emailId, ignore) {
+        var request = XHR.Put("API/Email/" + emailId.toString() + "/Ignore?ignore=" + (ignore ? "true" : "false"));
+
+        return new Promise(function (resolve, reject) {
+            request.then(function (response) {
+                resolve(JSON.parse(response.Text));
+            }).catch(function () {
+                console.log("error in Set Email Ignore");
+                reject(null);
+            });
+        });
+    };
+
     Email.prototype.CheckMailbox = function (mailboxName) {
         return CoMail.mailboxes.some(function (m) {
             return m.MailboxName === mailboxName;
@@ -638,8 +651,55 @@ var CoMail;
         }
 
         AddAttachments(e.Attachments || []);
+        ConfigureEmailIgnoreAction(e, false);
     }
     CoMail.BuildEmailView = BuildEmailView;
+
+    function ConfigureEmailIgnoreAction(email, isBusy) {
+        var button = document.getElementById("EmailIgnoreAction");
+        if (button === null) {
+            return;
+        }
+
+        var canManage = CoMail.siteState !== null && CoMail.siteState.CanManageIgnoredEmails === true;
+        if (!canManage || email === null || email === undefined) {
+            button.hidden = true;
+            button.disabled = true;
+            button.setAttribute("aria-hidden", "true");
+            button.removeAttribute("aria-busy");
+            button.onclick = null;
+            return;
+        }
+
+        var isIgnored = email.Ignore === true;
+        button.hidden = false;
+        button.disabled = !!isBusy;
+        button.setAttribute("aria-hidden", "false");
+
+        if (isBusy) {
+            button.setAttribute("aria-busy", "true");
+            button.textContent = "Updating...";
+            button.setAttribute("aria-label", "Updating email family ignore status");
+        }
+        else {
+            button.removeAttribute("aria-busy");
+            button.textContent = isIgnored ? "Restore family" : "Ignore family";
+            button.setAttribute(
+                "aria-label",
+                isIgnored ? "Restore this email family" : "Ignore this email family");
+        }
+
+        button.onclick = function () {
+            if (button.disabled) {
+                return;
+            }
+
+            if (CoMail.ToggleEmailIgnore !== undefined) {
+                CoMail.ToggleEmailIgnore(email.Id, !isIgnored);
+            }
+        };
+    }
+    CoMail.ConfigureEmailIgnoreAction = ConfigureEmailIgnoreAction;
 
     function AddAttachments(attachments) {
         var attachmentContainer = document.getElementById("EmailAttachments");
@@ -662,10 +722,29 @@ var CoMail;
 
         for (var i = 0; i < attachments.length; i++) {
             var a = attachments[i];
+            var attachmentUrl = a.URL;
+            var attachmentName = a.Filename;
             var tag = document.createElement("a");
             tag.classList.add("tag", "is-link", "is-light", "attachment-tag");
-            tag.href = a.URL;
-            tag.setAttribute("aria-label", "Open attachment " + a.Filename);
+            tag.href = attachmentUrl;
+            tag.target = "_blank";
+            tag.rel = "noopener noreferrer";
+            tag.setAttribute("aria-label", "Open attachment " + attachmentName + " in a new window");
+            tag.addEventListener("click", (function (url) {
+                return function (evt) {
+                    evt.preventDefault();
+                    var opened = window.open(url, "_blank", "noopener,noreferrer");
+                    if (opened !== null) {
+                        try {
+                            opened.opener = null;
+                            opened.focus();
+                        }
+                        catch (err) {
+                            // Some browsers block opener access even with noopener.
+                        }
+                    }
+                };
+            })(attachmentUrl));
 
             var icon = document.createElement("span");
             icon.classList.add("icon", "is-small");
@@ -673,7 +752,7 @@ var CoMail;
             icon.appendChild(CreatePaperclipIcon());
 
             var label = document.createElement("span");
-            label.textContent = a.Filename;
+            label.textContent = attachmentName;
 
             tag.appendChild(icon);
             tag.appendChild(label);
@@ -731,13 +810,29 @@ var CoMail;
 
             var row = document.createElement("tr");
             row.classList.add("email-row", "email-row--clickable");
+            if (email.Ignore) {
+                row.classList.add("email-row--ignored");
+            }
             row.addEventListener("click", CreateEmailRowClickHandler(emailHref));
 
             row.appendChild(CreateEmailDateCell(email.DateReceived_ToString, email.DateReceived_DateOnlyString));
             row.appendChild(CreateEmailListCell("email-from-cell", email.From));
 
-            var subjectCell = CreateEmailListCell("email-subject-cell", email.Subject);
+            var subjectCell = CreateEmailListCell("email-subject-cell", "");
             subjectCell.title = email.Subject;
+
+            var subjectText = document.createElement("span");
+            subjectText.textContent = email.Subject;
+            subjectCell.appendChild(subjectText);
+
+            if (email.Ignore) {
+                var ignoredTag = document.createElement("span");
+                ignoredTag.classList.add("tag", "is-warning", "is-light", "is-small", "ml-2");
+                ignoredTag.textContent = "Ignored";
+                ignoredTag.setAttribute("aria-label", "Ignored email");
+                subjectCell.appendChild(ignoredTag);
+            }
+
             row.appendChild(subjectCell);
 
             var actionCell = CreateEmailListCell("email-action-cell", "");
@@ -1298,6 +1393,7 @@ var CoMail;
     CoMail.currentHash = null;
     CoMail.currentEmailCount = 0;
     CoMail.currentSection = "county";
+    CoMail.siteState = null;
 
     var loadingOperations = 0;
 
@@ -1305,6 +1401,7 @@ var CoMail;
         loadingOperations = 0;
         CoMail.Hide("Loading");
         SetLoadingModalState(false);
+        UpdateEmailListDescriptions();
         CoMail.InitializeEmailModal(ModalClosed);
         window.onhashchange = HashChange;
         window.addEventListener("resize", ViewportChanged);
@@ -1315,6 +1412,24 @@ var CoMail;
         }
     }
     CoMail.Start = Start;
+
+    function UpdateEmailListDescriptions() {
+        var isInternal = CoMail.siteState !== null && CoMail.siteState.IsInternalUser === true;
+
+        var description = document.getElementById("EmailListDescription");
+        if (description !== null) {
+            description.textContent = isInternal
+                ? "Internal email list for the selected mailbox. Ignored emails are marked with an Ignored badge. Move through the email rows or use the open action to review the full message. On smaller screens, the from and open columns are hidden."
+                : "Public email list for the selected mailbox. Move through the email rows or use the open action to review the full message. On smaller screens, the from and open columns are hidden.";
+        }
+
+        var caption = document.querySelector(".email-table caption");
+        if (caption !== null) {
+            caption.textContent = isInternal
+                ? "Internal emails in the selected mailbox"
+                : "Public emails in the selected mailbox";
+        }
+    }
 
     function ModalClosed(evt) {
         if (evt !== undefined && evt !== null) {
@@ -1524,6 +1639,37 @@ var CoMail;
                 console.log("error getting Email Count");
             });
     }
+
+    function ToggleEmailIgnore(emailId, ignore) {
+        if (CoMail.ConfigureEmailIgnoreAction !== undefined) {
+            CoMail.ConfigureEmailIgnoreAction({ Id: emailId, Ignore: !ignore }, true);
+        }
+
+        BeginLoading();
+        var email = new CoMail.Email();
+        email.SetIgnoreFamily(emailId, ignore)
+            .then(function () {
+                try {
+                    if (CoMail.ConfigureEmailIgnoreAction !== undefined) {
+                        CoMail.ConfigureEmailIgnoreAction({ Id: emailId, Ignore: ignore }, false);
+                    }
+
+                    if (CoMail.currentHash !== null) {
+                        GetEmailList(CoMail.currentHash);
+                    }
+                }
+                finally {
+                    EndLoading();
+                }
+            }, function () {
+                console.log("error updating Email Ignore");
+                if (CoMail.ConfigureEmailIgnoreAction !== undefined) {
+                    CoMail.ConfigureEmailIgnoreAction({ Id: emailId, Ignore: !ignore }, false);
+                }
+                EndLoading();
+            });
+    }
+    CoMail.ToggleEmailIgnore = ToggleEmailIgnore;
 
     function BuildPaging() {
         if (CoMail.currentHash === null) {

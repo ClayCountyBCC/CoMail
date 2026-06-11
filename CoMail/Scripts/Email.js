@@ -55,6 +55,19 @@ var CoMail;
         });
     };
 
+    Email.prototype.SetIgnoreFamily = function (emailId, ignore) {
+        var request = XHR.Put("API/Email/" + emailId.toString() + "/Ignore?ignore=" + (ignore ? "true" : "false"));
+
+        return new Promise(function (resolve, reject) {
+            request.then(function (response) {
+                resolve(JSON.parse(response.Text));
+            }).catch(function () {
+                console.log("error in Set Email Ignore");
+                reject(null);
+            });
+        });
+    };
+
     Email.prototype.CheckMailbox = function (mailboxName) {
         return CoMail.mailboxes.some(function (m) {
             return m.MailboxName === mailboxName;
