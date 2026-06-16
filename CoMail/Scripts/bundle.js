@@ -258,8 +258,13 @@ var CoMail;
     function Email() {
     }
 
-    Email.prototype.Get = function (emailId) {
-        var request = XHR.Get("API/Email/" + emailId.toString());
+    Email.prototype.Get = function (emailId, mailboxName) {
+        var url = "API/Email/" + emailId.toString();
+        if (mailboxName !== null && mailboxName !== undefined && mailboxName.length > 0) {
+            url += "?mailbox=" + encodeURIComponent(mailboxName);
+        }
+
+        var request = XHR.Get(url);
 
         return new Promise(function (resolve, reject) {
             request.then(function (response) {
@@ -311,14 +316,19 @@ var CoMail;
     };
 
     Email.prototype.SetIgnoreFamily = function (emailId, ignore) {
-        var request = XHR.Put("API/Email/" + emailId.toString() + "/Ignore?ignore=" + (ignore ? "true" : "false"));
+        var headers = [new XHR.Header("Accept", "application/json")];
+        var request = XHR.Put(
+            "API/Email/" + emailId.toString() + "?ignore=" + (ignore ? "true" : "false"),
+            "",
+            headers,
+            false);
 
         return new Promise(function (resolve, reject) {
             request.then(function (response) {
                 resolve(JSON.parse(response.Text));
-            }).catch(function () {
-                console.log("error in Set Email Ignore");
-                reject(null);
+            }).catch(function (response) {
+                console.log("error in Set Email Ignore", response);
+                reject(response);
             });
         });
     };
@@ -628,38 +638,167 @@ var CoMail;
 
 var CoMail;
 (function (CoMail) {
+    var selectedEmail = null;
+
     function BuildEmailView(e) {
+        BuildEmailSurface(e, {
+            subject: "EmailSubject",
+            dateReceived: "EmailDateReceived",
+            from: "EmailFrom",
+            to: "EmailTo",
+            cc: "EmailCc",
+            attachments: "EmailAttachments",
+            message: "EmailMessage"
+        });
+        ConfigureEmailSaveAction(e);
+        ConfigureEmailIgnoreAction(e, false);
+    }
+    CoMail.BuildEmailView = BuildEmailView;
+
+    function BuildEmailPreview(e) {
+        if (e === null || e === undefined) {
+            ShowEmailPreviewStatus("Email unavailable", "The selected email could not be loaded.");
+            return;
+        }
+
+        var empty = document.getElementById("EmailPreviewEmpty");
+        var content = document.getElementById("EmailPreviewContent");
+        if (empty !== null) {
+            empty.hidden = true;
+        }
+
+        if (content !== null) {
+            content.hidden = false;
+        }
+
+        BuildEmailSurface(e, {
+            subject: "PreviewEmailSubject",
+            dateReceived: "PreviewEmailDateReceived",
+            from: "PreviewEmailFrom",
+            to: "PreviewEmailTo",
+            cc: "PreviewEmailCc",
+            attachments: "PreviewEmailAttachments",
+            message: "PreviewEmailMessage"
+        });
+        ResetEmailPreviewScroll();
+        ConfigureEmailSaveAction(e);
+        ConfigureEmailIgnoreAction(e, false);
+    }
+    CoMail.BuildEmailPreview = BuildEmailPreview;
+
+    function ShowEmailPreviewStatus(title, message) {
+        var empty = document.getElementById("EmailPreviewEmpty");
+        var content = document.getElementById("EmailPreviewContent");
+        var titleElement = document.getElementById("EmailPreviewTitle");
+        var messageElement = empty === null ? null : empty.querySelector(".help");
+
+        if (content !== null) {
+            content.hidden = true;
+        }
+
+        if (empty !== null) {
+            empty.hidden = false;
+        }
+
+        if (titleElement !== null) {
+            titleElement.textContent = title;
+        }
+
+        if (messageElement !== null) {
+            messageElement.textContent = message;
+        }
+
+        ResetEmailPreviewScroll();
+        ConfigureEmailSaveAction(null);
+        ConfigureEmailIgnoreAction(null, false);
+    }
+    CoMail.ShowEmailPreviewStatus = ShowEmailPreviewStatus;
+
+    function ClearEmailPreview() {
+        ShowEmailPreviewStatus("Select an email", "No message selected.");
+
+        SetValue("PreviewEmailSubject", "");
+        SetValue("PreviewEmailDateReceived", "");
+        SetValue("PreviewEmailFrom", "");
+        SetValue("PreviewEmailTo", "");
+        SetValue("PreviewEmailCc", "");
+        clearElement(document.getElementById("PreviewEmailAttachments"));
+        clearElement(document.getElementById("PreviewEmailMessage"));
+        ResetEmailPreviewScroll();
+        ConfigureEmailSaveAction(null);
+        HighlightSelectedEmail(-1);
+    }
+    CoMail.ClearEmailPreview = ClearEmailPreview;
+
+    function BuildEmailSurface(e, target) {
         var attachments = e.Attachments || [];
 
-        SetValue("EmailSubject", e.Subject);
-        SetValue("EmailDateReceived", e.DateReceived_ToString);
-        SetValue("EmailFrom", e.From);
-        SetValue("EmailTo", e.To);
-        SetValue("EmailCc", e.CC);
+        SetValue(target.subject, e.Subject);
+        SetValue(target.dateReceived, e.DateReceived_ToString);
+        SetValue(target.from, e.From);
+        SetValue(target.to, e.To);
+        SetValue(target.cc, e.CC);
 
-        var emailMessage = document.getElementById("EmailMessage");
+        var emailMessage = document.getElementById(target.message);
         if (emailMessage !== null) {
             clearElement(emailMessage);
 
             var bodyWrapper = document.createElement("div");
             bodyWrapper.classList.add("email-body");
-
-            var parser = new DOMParser();
-            var parsed = parser.parseFromString(e.Body || "", "text/html");
-            if (parsed.body !== null && parsed.body.innerHTML.length > 0) {
-                ResolveInlineCidImages(parsed.body, attachments);
-            }
-
-            var html = parsed.body !== null && parsed.body.innerHTML.length > 0 ? parsed.body.innerHTML : (e.Body || "");
-            bodyWrapper.innerHTML = html;
-
+            bodyWrapper.innerHTML = BuildResolvedEmailBodyHtml(e.Body || "", attachments, false);
             emailMessage.appendChild(bodyWrapper);
         }
 
-        AddAttachments(attachments);
-        ConfigureEmailIgnoreAction(e, false);
+        AddAttachments(attachments, target.attachments);
     }
-    CoMail.BuildEmailView = BuildEmailView;
+
+    function BuildResolvedEmailBodyHtml(body, attachments, useAbsoluteUrls) {
+        var parser = new DOMParser();
+        var parsed = parser.parseFromString(body || "", "text/html");
+        if (parsed.body !== null && parsed.body.innerHTML.length > 0) {
+            ResolveInlineCidImages(parsed.body, attachments);
+
+            if (useAbsoluteUrls) {
+                SanitizePrintableContent(parsed.body);
+                ConvertRelativeUrlsToAbsolute(parsed.body);
+            }
+        }
+
+        return parsed.body !== null && parsed.body.innerHTML.length > 0 ? parsed.body.innerHTML : (body || "");
+    }
+
+    function ResetEmailPreviewScroll() {
+        var previewPane = document.getElementById("EmailPreviewPane");
+        if (previewPane !== null) {
+            previewPane.scrollTop = 0;
+        }
+
+        var previewContent = document.getElementById("EmailPreviewContent");
+        if (previewContent !== null) {
+            previewContent.scrollTop = 0;
+        }
+
+        var previewMessage = document.getElementById("PreviewEmailMessage");
+        if (previewMessage !== null) {
+            previewMessage.scrollTop = 0;
+        }
+
+        if (typeof window.requestAnimationFrame === "function") {
+            window.requestAnimationFrame(function () {
+                if (previewPane !== null) {
+                    previewPane.scrollTop = 0;
+                }
+
+                if (previewContent !== null) {
+                    previewContent.scrollTop = 0;
+                }
+
+                if (previewMessage !== null) {
+                    previewMessage.scrollTop = 0;
+                }
+            });
+        }
+    }
 
     function ResolveInlineCidImages(root, attachments) {
         if (root === null || root === undefined || attachments === null || attachments === undefined || attachments.length === 0) {
@@ -752,7 +891,7 @@ var CoMail;
     }
 
     function ConvertCidImageToThumbnail(image, attachment) {
-        image.setAttribute("src", attachment.URL);
+        image.setAttribute("src", BuildAttachmentAccessUrl(attachment.URL));
         image.classList.add("email-inline-image");
         image.setAttribute("loading", "lazy");
         image.setAttribute("decoding", "async");
@@ -781,7 +920,7 @@ var CoMail;
     }
 
     function ConfigureInlineImageLink(link, attachment) {
-        link.href = attachment.URL;
+        link.href = BuildAttachmentAccessUrl(attachment.URL);
         link.target = "_blank";
         link.rel = "noopener noreferrer";
         link.classList.add("email-inline-image-link");
@@ -818,8 +957,315 @@ var CoMail;
         parent.replaceChild(placeholder, image);
     }
 
+    function SanitizePrintableContent(root) {
+        if (root === null || root === undefined) {
+            return;
+        }
+
+        var blockedElements = root.querySelectorAll("script, iframe, object, embed, form, input, button, select, textarea, link, meta, base");
+        for (var i = 0; i < blockedElements.length; i++) {
+            var element = blockedElements[i];
+            if (element.parentNode !== null) {
+                element.parentNode.removeChild(element);
+            }
+        }
+
+        var elements = root.querySelectorAll("*");
+        for (var j = 0; j < elements.length; j++) {
+            RemoveDangerousAttributes(elements[j]);
+        }
+    }
+
+    function RemoveDangerousAttributes(element) {
+        if (element === null || element === undefined || element.attributes === undefined) {
+            return;
+        }
+
+        for (var i = element.attributes.length - 1; i >= 0; i--) {
+            var attribute = element.attributes[i];
+            var name = attribute.name.toLowerCase();
+            var value = attribute.value || "";
+
+            if (name.indexOf("on") === 0) {
+                element.removeAttribute(attribute.name);
+                continue;
+            }
+
+            if ((name === "href" || name === "src") && value.trim().toLowerCase().indexOf("javascript:") === 0) {
+                element.removeAttribute(attribute.name);
+            }
+        }
+    }
+
+    function ConvertRelativeUrlsToAbsolute(root) {
+        if (root === null || root === undefined) {
+            return;
+        }
+
+        var elements = root.querySelectorAll("[href], [src]");
+        for (var i = 0; i < elements.length; i++) {
+            var element = elements[i];
+            NormalizeUrlAttribute(element, "href");
+            NormalizeUrlAttribute(element, "src");
+        }
+    }
+
+    function NormalizeUrlAttribute(element, attributeName) {
+        if (element === null || element === undefined || !element.hasAttribute(attributeName)) {
+            return;
+        }
+
+        var value = element.getAttribute(attributeName);
+        if (value === null || value === undefined || value.trim().length === 0) {
+            return;
+        }
+
+        element.setAttribute(attributeName, ToAbsoluteUrl(value));
+    }
+
+    function ConfigureEmailSaveAction(email) {
+        selectedEmail = email === null || email === undefined ? null : email;
+
+        var buttons = [
+            document.getElementById("EmailSaveAction"),
+            document.getElementById("EmailPreviewSaveAction")
+        ];
+
+        for (var i = 0; i < buttons.length; i++) {
+            ConfigureEmailSaveButton(buttons[i], selectedEmail);
+        }
+    }
+    CoMail.ConfigureEmailSaveAction = ConfigureEmailSaveAction;
+
+    function ConfigureEmailSaveButton(button, email) {
+        if (button === null) {
+            return;
+        }
+
+        if (email === null || email === undefined) {
+            button.hidden = true;
+            button.disabled = true;
+            button.setAttribute("aria-hidden", "true");
+            button.onclick = null;
+            return;
+        }
+
+        button.hidden = false;
+        button.disabled = false;
+        button.setAttribute("aria-hidden", "false");
+        button.setAttribute("aria-label", "Save this email as a PDF");
+        button.onclick = function () {
+            SaveEmailAsPdf(email);
+        };
+    }
+
+    function SaveEmailAsPdf(email) {
+        if (email === null || email === undefined) {
+            return;
+        }
+
+        var printWindow = window.open("", "_blank");
+        if (printWindow === null) {
+            window.alert("The browser blocked the PDF window. Please allow pop-ups for this site and try again.");
+            return;
+        }
+
+        var documentTitle = BuildPrintableDocumentTitle(email);
+        var mailboxName = GetCurrentMailboxDisplayName();
+        var printDocument = BuildEmailPrintDocument(email, mailboxName, documentTitle);
+
+        printWindow.document.open();
+        printWindow.document.write(printDocument);
+        printWindow.document.close();
+
+        try {
+            printWindow.opener = null;
+            printWindow.focus();
+        }
+        catch (err) {
+            // Some browsers restrict opener access or focus control.
+        }
+    }
+    CoMail.SaveEmailAsPdf = SaveEmailAsPdf;
+
+    function BuildEmailPrintDocument(email, mailboxName, documentTitle) {
+        var attachmentsMarkup = BuildPrintableAttachmentsMarkup(email.Attachments || []);
+        var bodyMarkup = BuildResolvedEmailBodyHtml(email.Body || "", email.Attachments || [], true);
+        var filename = BuildPrintableFileName(email);
+        var printScript = "(function(){function p(){try{window.focus();window.print();}catch(e){}}function c(){setTimeout(function(){try{window.close();}catch(e){}},150);}function w(){var i=Array.prototype.slice.call(document.images||[]);if(i.length===0){setTimeout(p,120);return;}var r=i.length;var d=false;function f(){if(d){return;}d=true;setTimeout(p,120);}function m(){r--;if(r<=0){f();}}setTimeout(f,1500);for(var x=0;x<i.length;x++){if(i[x].complete){m();continue;}i[x].addEventListener('load',m,{once:true});i[x].addEventListener('error',m,{once:true});}}window.addEventListener('load',w,{once:true});window.addEventListener('afterprint',c,{once:true});})();";
+
+        return "<!DOCTYPE html>" +
+            "<html lang=\"en\"><head><meta charset=\"utf-8\">" +
+            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">" +
+            "<title>" + EscapeHtml(documentTitle) + "</title>" +
+            "<style>" + BuildEmailPrintStyles() + "</style>" +
+            "</head><body>" +
+            "<main class=\"print-email\" aria-label=\"Printable email\">" +
+            "<header class=\"print-email__header\">" +
+            "<p class=\"print-email__eyebrow\">Save Email</p>" +
+            "<h1 class=\"print-email__subject\">" + EscapeHtml(email.Subject || "(No subject)") + "</h1>" +
+            "<p class=\"print-email__meta\">Use your browser print dialog destination set to Save as PDF to download this email.</p>" +
+            "</header>" +
+            "<section class=\"print-email__summary\" aria-label=\"Email details\">" +
+            BuildPrintableDetail("Mailbox", mailboxName) +
+            BuildPrintableDetail("Date", email.DateReceived_ToString) +
+            BuildPrintableDetail("From", email.From) +
+            BuildPrintableDetail("To", email.To) +
+            BuildPrintableDetail("Cc", email.CC) +
+            BuildPrintableDetail("File name", filename) +
+            "</section>" +
+            "<section class=\"print-email__attachments-section\" aria-label=\"Attachments\">" +
+            "<h2>Attachments</h2>" +
+            attachmentsMarkup +
+            "</section>" +
+            "<section class=\"print-email__message-section\" aria-label=\"Message\">" +
+            "<h2>Message</h2>" +
+            "<div class=\"print-email__message email-body\">" + bodyMarkup + "</div>" +
+            "</section>" +
+            "</main>" +
+            "<script>" + printScript + "</script>" +
+            "</body></html>";
+    }
+
+    function BuildPrintableAttachmentsMarkup(attachments) {
+        if (attachments === null || attachments === undefined || attachments.length === 0) {
+            return "<p class=\"print-email__empty\">None</p>";
+        }
+
+        var items = [];
+        for (var i = 0; i < attachments.length; i++) {
+            var attachment = attachments[i];
+            items.push(
+                "<li><a href=\"" + EscapeAttribute(BuildAttachmentAccessUrl(attachment.URL || "")) + "\">" +
+                EscapeHtml(attachment.Filename || "Attachment") +
+                "</a></li>");
+        }
+
+        return "<ul class=\"print-email__attachments\">" + items.join("") + "</ul>";
+    }
+
+    function BuildPrintableDetail(label, value) {
+        var safeValue = value === null || value === undefined || value === "" ? "None" : value;
+        return "<div class=\"print-email__detail\"><dt>" +
+            EscapeHtml(label) +
+            "</dt><dd>" +
+            EscapeHtml(safeValue) +
+            "</dd></div>";
+    }
+
+    function BuildPrintableDocumentTitle(email) {
+        var parts = ["Public Email"];
+        if (email !== null && email !== undefined && (email.Subject || "").trim().length > 0) {
+            parts.push(email.Subject.trim());
+        }
+
+        if (email !== null && email !== undefined && (email.DateReceived_DateOnlyString || "").trim().length > 0) {
+            parts.push(email.DateReceived_DateOnlyString.trim());
+        }
+
+        return parts.join(" - ");
+    }
+
+    function BuildPrintableFileName(email) {
+        var subject = email === null || email === undefined ? "" : (email.Subject || "");
+        var date = email === null || email === undefined ? "" : (email.DateReceived_DateOnlyString || "");
+        var safeSubject = subject.replace(/[\\\\/:*?\"<>|]+/g, " ").replace(/\s+/g, " ").trim();
+        var safeDate = date.replace(/[\\\\/:*?\"<>|]+/g, "-").trim();
+        var parts = ["PublicEmail"];
+
+        if (safeDate.length > 0) {
+            parts.push(safeDate);
+        }
+
+        if (safeSubject.length > 0) {
+            parts.push(safeSubject);
+        }
+
+        return parts.join(" - ");
+    }
+
+    function GetCurrentMailboxDisplayName() {
+        var mailboxName = document.getElementById("MailboxName");
+        if (mailboxName === null) {
+            return "";
+        }
+
+        return mailboxName.textContent || "";
+    }
+
+    function BuildAttachmentAccessUrl(url) {
+        if (url === null || url === undefined || url === "") {
+            return "";
+        }
+
+        var absoluteUrl = ToAbsoluteUrl(url);
+        var mailboxName = CoMail.currentHash === null ? "" : (CoMail.currentHash.Mailbox || "");
+        if (mailboxName.length === 0) {
+            return absoluteUrl;
+        }
+
+        try {
+            var resolved = new URL(absoluteUrl, window.location.href);
+            if (!resolved.searchParams.has("mailbox")) {
+                resolved.searchParams.set("mailbox", mailboxName);
+            }
+
+            return resolved.toString();
+        }
+        catch (err) {
+            var separator = absoluteUrl.indexOf("?") > -1 ? "&" : "?";
+            return absoluteUrl + separator + "mailbox=" + encodeURIComponent(mailboxName);
+        }
+    }
+
+    function ToAbsoluteUrl(url) {
+        if (url === null || url === undefined || url === "") {
+            return "";
+        }
+
+        try {
+            return new URL(url, window.location.href).href;
+        }
+        catch (err) {
+            return url;
+        }
+    }
+
+    function EscapeHtml(value) {
+        if (value === null || value === undefined) {
+            return "";
+        }
+
+        return value
+            .toString()
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    function EscapeAttribute(value) {
+        return EscapeHtml(value);
+    }
+
+    function BuildEmailPrintStyles() {
+        return "html,body{margin:0;padding:0;background:#eef3f8;color:#1e2a35;font-family:'Segoe UI','Segoe UI Variable','Helvetica Neue',Arial,sans-serif;line-height:1.5;}body{padding:1.25rem;}a{color:#143d64;word-break:break-word;}main.print-email{max-width:8.5in;margin:0 auto;padding:1.25rem 1.35rem;border:1px solid #d7e1ec;border-radius:0.75rem;background:#fff;box-shadow:0 0.35rem 1.2rem rgba(20,36,56,0.10);} .print-email__header{margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid #d7e1ec;} .print-email__eyebrow{margin:0 0 0.3rem;font-size:0.82rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#475569;} .print-email__subject{margin:0 0 0.45rem;font-size:1.8rem;line-height:1.2;color:#0d2740;overflow-wrap:anywhere;} .print-email__meta{margin:0;color:#415266;font-size:0.95rem;} .print-email__summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.75rem;margin-bottom:1.1rem;} .print-email__detail{padding:0.75rem 0.9rem;border:1px solid #d7e1ec;border-radius:0.65rem;background:#f7fafc;} .print-email__detail dt{margin:0 0 0.2rem;font-size:0.75rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#0d2740;} .print-email__detail dd{margin:0;overflow-wrap:anywhere;} .print-email__attachments-section,.print-email__message-section{margin-top:1rem;} .print-email__attachments-section h2,.print-email__message-section h2{margin:0 0 0.55rem;font-size:1.05rem;color:#0d2740;} .print-email__attachments{margin:0;padding-left:1.2rem;} .print-email__attachments li + li{margin-top:0.25rem;} .print-email__empty{margin:0;color:#415266;} .print-email__message{padding:1rem;border:1px solid #d7e1ec;border-radius:0.65rem;background:#fff;overflow-wrap:anywhere;} .print-email__message img{max-width:100%;height:auto;} .print-email__message table{max-width:100%;border-collapse:collapse;} @media print{html,body{background:#fff;}body{padding:0;}main.print-email{max-width:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;} .print-email__meta{color:#1e2a35;} a{color:#143d64;text-decoration:underline;}} @media (max-width: 720px){body{padding:0.6rem;} main.print-email{padding:1rem;} .print-email__summary{grid-template-columns:1fr;} .print-email__subject{font-size:1.45rem;}}";
+    }
+
     function ConfigureEmailIgnoreAction(email, isBusy) {
-        var button = document.getElementById("EmailIgnoreAction");
+        var buttons = [
+            document.getElementById("EmailIgnoreAction"),
+            document.getElementById("EmailPreviewIgnoreAction")
+        ];
+
+        for (var i = 0; i < buttons.length; i++) {
+            ConfigureEmailIgnoreButton(buttons[i], email, isBusy);
+        }
+    }
+    CoMail.ConfigureEmailIgnoreAction = ConfigureEmailIgnoreAction;
+
+    function ConfigureEmailIgnoreButton(button, email, isBusy) {
         if (button === null) {
             return;
         }
@@ -862,10 +1308,9 @@ var CoMail;
             }
         };
     }
-    CoMail.ConfigureEmailIgnoreAction = ConfigureEmailIgnoreAction;
 
-    function AddAttachments(attachments) {
-        var attachmentContainer = document.getElementById("EmailAttachments");
+    function AddAttachments(attachments, containerId) {
+        var attachmentContainer = document.getElementById(containerId);
         if (attachmentContainer === null) {
             return;
         }
@@ -885,7 +1330,7 @@ var CoMail;
 
         for (var i = 0; i < attachments.length; i++) {
             var a = attachments[i];
-            var attachmentUrl = a.URL;
+            var attachmentUrl = BuildAttachmentAccessUrl(a.URL);
             var attachmentName = a.Filename;
             var tag = document.createElement("a");
             tag.classList.add("tag", "is-link", "is-light", "attachment-tag");
@@ -893,21 +1338,6 @@ var CoMail;
             tag.target = "_blank";
             tag.rel = "noopener noreferrer";
             tag.setAttribute("aria-label", "Open attachment " + attachmentName + " in a new window");
-            tag.addEventListener("click", (function (url) {
-                return function (evt) {
-                    evt.preventDefault();
-                    var opened = window.open(url, "_blank", "noopener,noreferrer");
-                    if (opened !== null) {
-                        try {
-                            opened.opener = null;
-                            opened.focus();
-                        }
-                        catch (err) {
-                            // Some browsers block opener access even with noopener.
-                        }
-                    }
-                };
-            })(attachmentUrl));
 
             var icon = document.createElement("span");
             icon.classList.add("icon", "is-small");
@@ -973,10 +1403,19 @@ var CoMail;
 
             var row = document.createElement("tr");
             row.classList.add("email-row", "email-row--clickable");
+            row.setAttribute("data-email-id", email.Id.toString());
+            row.setAttribute("role", "link");
+            row.setAttribute("aria-label", BuildEmailRowLabel(email));
+            row.tabIndex = 0;
             if (email.Ignore) {
                 row.classList.add("email-row--ignored");
             }
+            if (CoMail.currentHash !== null && CoMail.currentHash.EmailId === email.Id) {
+                row.classList.add("email-row--selected");
+                row.setAttribute("aria-current", "true");
+            }
             row.addEventListener("click", CreateEmailRowClickHandler(emailHref));
+            row.addEventListener("keydown", CreateEmailRowKeyHandler(emailHref));
 
             row.appendChild(CreateEmailDateCell(email.DateReceived_ToString, email.DateReceived_DateOnlyString));
             row.appendChild(CreateEmailListCell("email-from-cell", email.From));
@@ -985,8 +1424,14 @@ var CoMail;
             subjectCell.title = email.Subject;
 
             var subjectText = document.createElement("span");
+            subjectText.classList.add("email-subject-cell__subject");
             subjectText.textContent = email.Subject;
             subjectCell.appendChild(subjectText);
+
+            var subjectMeta = document.createElement("span");
+            subjectMeta.classList.add("email-subject-cell__meta");
+            subjectMeta.textContent = email.From || "";
+            subjectCell.appendChild(subjectMeta);
 
             if (email.Ignore) {
                 var ignoredTag = document.createElement("span");
@@ -998,34 +1443,79 @@ var CoMail;
 
             row.appendChild(subjectCell);
 
-            var actionCell = CreateEmailListCell("email-action-cell", "");
-            actionCell.classList.add("has-text-centered");
-
-            var viewButton = document.createElement("a");
-            viewButton.classList.add("button", "is-link", "is-light", "is-small", "email-view-button");
-            viewButton.href = emailHref;
-            viewButton.setAttribute("aria-label", "View email: " + email.Subject);
-            viewButton.setAttribute("aria-haspopup", "dialog");
-            viewButton.setAttribute("aria-controls", "EmailView");
-
-            var buttonIcon = document.createElement("span");
-            buttonIcon.classList.add("icon", "is-small");
-            buttonIcon.setAttribute("aria-hidden", "true");
-            buttonIcon.appendChild(CreateEnvelopeIcon());
-
-            var buttonLabel = document.createElement("span");
-            buttonLabel.textContent = "View";
-
-            viewButton.appendChild(buttonIcon);
-            viewButton.appendChild(buttonLabel);
-            actionCell.appendChild(viewButton);
-            row.appendChild(actionCell);
             fragment.appendChild(row);
         }
 
         emailList.appendChild(fragment);
     }
     CoMail.BuildEmailList = BuildEmailList;
+
+    function HighlightSelectedEmail(emailId) {
+        var rows = document.querySelectorAll(".email-row[data-email-id]");
+        for (var i = 0; i < rows.length; i++) {
+            var row = rows[i];
+            var isSelected = row.getAttribute("data-email-id") === emailId.toString();
+            row.classList.toggle("email-row--selected", isSelected);
+            if (isSelected) {
+                row.setAttribute("aria-current", "true");
+            }
+            else {
+                row.removeAttribute("aria-current");
+            }
+        }
+    }
+    CoMail.HighlightSelectedEmail = HighlightSelectedEmail;
+
+    function SelectEmailRow(emailId) {
+        if (emailId === null || emailId === undefined || isNaN(emailId) || emailId < 0) {
+            HighlightSelectedEmail(-1);
+            return null;
+        }
+
+        var row = document.querySelector('.email-row[data-email-id="' + emailId.toString() + '"]');
+        if (row === null) {
+            HighlightSelectedEmail(-1);
+            return null;
+        }
+
+        HighlightSelectedEmail(emailId);
+        EnsureEmailRowIsVisible(row);
+        return row;
+    }
+    CoMail.SelectEmailRow = SelectEmailRow;
+
+    function SelectCurrentEmailRow() {
+        if (CoMail.currentHash === null) {
+            HighlightSelectedEmail(-1);
+            return null;
+        }
+
+        return SelectEmailRow(CoMail.currentHash.EmailId);
+    }
+    CoMail.SelectCurrentEmailRow = SelectCurrentEmailRow;
+
+    function EnsureEmailRowIsVisible(row) {
+        if (row === null || row === undefined) {
+            return;
+        }
+
+        var container = row.closest(".table-container");
+        if (container === null) {
+            return;
+        }
+
+        var rowRect = row.getBoundingClientRect();
+        var containerRect = container.getBoundingClientRect();
+
+        if (rowRect.top < containerRect.top) {
+            container.scrollTop -= (containerRect.top - rowRect.top);
+            return;
+        }
+
+        if (rowRect.bottom > containerRect.bottom) {
+            container.scrollTop += (rowRect.bottom - containerRect.bottom);
+        }
+    }
 
     function CreateEmailDateCell(fullText, mobileText) {
         var cell = document.createElement("td");
@@ -1062,6 +1552,43 @@ var CoMail;
                 location.hash = emailHref.substring(1);
             }
         };
+    }
+
+    function CreateEmailRowKeyHandler(emailHref) {
+        return function (event) {
+            if (event.key !== "Enter" && event.key !== " " && event.key !== "Spacebar") {
+                return;
+            }
+
+            event.preventDefault();
+            if (emailHref.length > 1) {
+                location.hash = emailHref.substring(1);
+            }
+        };
+    }
+
+    // The row itself is the open control, so the label should describe the email.
+    // The row itself is the open control, so the label should describe the email.
+    function BuildEmailRowLabel(email) {
+        var parts = ["Open email"];
+
+        if (email.Subject !== null && email.Subject !== undefined && email.Subject.length > 0) {
+            parts.push(email.Subject);
+        }
+
+        if (email.From !== null && email.From !== undefined && email.From.length > 0) {
+            parts.push("from " + email.From);
+        }
+
+        if (email.DateReceived_ToString !== null && email.DateReceived_ToString !== undefined && email.DateReceived_ToString.length > 0) {
+            parts.push("dated " + email.DateReceived_ToString);
+        }
+
+        if (email.Ignore) {
+            parts.push("ignored");
+        }
+
+        return parts.join(", ");
     }
 
     function IsFormerCommissioner(title) {
@@ -1189,6 +1716,7 @@ var CoMail;
         }
 
         clearElement(document.getElementById("EmailList"));
+        ClearEmailPreview();
     }
     CoMail.ResetMailboxView = ResetMailboxView;
 
@@ -1384,6 +1912,9 @@ var CoMail;
         card.classList.add("card", "mailbox-card", "mailbox-card--link");
         if (isCommissionerCard) {
             card.classList.add("mailbox-card--commissioner");
+            card.addEventListener("click", function () {
+                CoMail.shouldAutoSelectFirstEmail = true;
+            });
         }
         card.href = cardHref;
         card.setAttribute("aria-label", BuildMailboxCardLabel(mailbox, sectionKind, isCommissionerCard));
@@ -1557,15 +2088,24 @@ var CoMail;
     CoMail.currentEmailCount = 0;
     CoMail.currentSection = "county";
     CoMail.siteState = null;
+    CoMail.shouldAutoSelectFirstEmail = false;
 
     var loadingOperations = 0;
+    var mailboxDrawerInitialized = false;
+    var mailboxDrawerCollapsed = false;
+    var mailboxDrawerStorageKey = "CoMail.MailboxDrawerCollapsed";
+    var administrativeModalInitialized = false;
+    var administrativeModalReturnFocus = null;
 
     function Start() {
         loadingOperations = 0;
+        CoMail.shouldAutoSelectFirstEmail = false;
         CoMail.Hide("Loading");
         SetLoadingModalState(false);
         UpdateEmailListDescriptions();
         CoMail.InitializeEmailModal(ModalClosed);
+        InitializeMailboxDrawer();
+        InitializeAdministrativeAccountsModal();
         window.onhashchange = HashChange;
         window.addEventListener("resize", ViewportChanged);
         GetMailBoxes();
@@ -1582,8 +2122,8 @@ var CoMail;
         var description = document.getElementById("EmailListDescription");
         if (description !== null) {
             description.textContent = isInternal
-                ? "Internal email list for the selected mailbox. Ignored emails are marked with an Ignored badge. Move through the email rows or use the open action to review the full message. On smaller screens, the from and open columns are hidden."
-                : "Public email list for the selected mailbox. Move through the email rows or use the open action to review the full message. On smaller screens, the from and open columns are hidden.";
+                ? "Internal email list for the selected mailbox. Ignored emails are marked with an Ignored badge. Each row shows the email date and sender on the first line, with the subject preview beneath. Move through the email rows or click or press Enter on a row to review the full message."
+                : "Public email list for the selected mailbox. Each row shows the email date and sender on the first line, with the subject preview beneath. Move through the email rows or click or press Enter on a row to review the full message.";
         }
 
         var caption = document.querySelector(".email-table caption");
@@ -1619,11 +2159,17 @@ var CoMail;
             CoMail.SyncFormerCommissionerDistricts();
         }
 
+        SyncMailboxDrawer();
+
         if (CoMail.currentHash === null) {
             return;
         }
 
         UpdateArchiveVisibility(CoMail.currentHash, false);
+
+        if (CoMail.currentHash.EmailId > -1) {
+            GetEmail(CoMail.currentHash.EmailId);
+        }
     }
 
     function HandleHash() {
@@ -1650,6 +2196,9 @@ var CoMail;
 
             if (lh.EmailId < 0) {
                 CoMail.CloseEmailModal();
+                if (CoMail.ClearEmailPreview !== undefined) {
+                    CoMail.ClearEmailPreview();
+                }
                 FocusMailboxName();
             }
         }
@@ -1663,6 +2212,9 @@ var CoMail;
         var wideLayout = IsWideArchiveLayout();
 
         if (lh.Mailbox.length === 0) {
+            document.body.classList.remove("mailbox-view-open");
+            document.documentElement.classList.remove("mailbox-view-open");
+
             if (resetSelectionState) {
                 CoMail.ResetMailboxView();
             }
@@ -1671,19 +2223,30 @@ var CoMail;
             CoMail.Show("MailboxList");
             CoMail.Hide("MailboxView");
             SetArchiveModalState(false);
+            SyncMailboxDrawer();
             window.scrollTo(0, 0);
             return;
         }
 
+        document.body.classList.add("mailbox-view-open");
+        document.documentElement.classList.add("mailbox-view-open");
+
         CoMail.Show("MailboxView");
-        SetArchiveModalState(wideLayout);
+        SetArchiveModalState(!wideLayout);
 
         var mailboxView = document.getElementById("MailboxView");
         if (mailboxView !== null) {
             mailboxView.scrollTop = 0;
         }
 
-        CoMail.Hide("MailboxList");
+        if (wideLayout) {
+            CoMail.Show("MailboxList");
+        }
+        else {
+            CoMail.Hide("MailboxList");
+        }
+
+        SyncMailboxDrawer();
 
         if (!wideLayout) {
             window.scrollTo(0, 0);
@@ -1743,6 +2306,184 @@ var CoMail;
         return window.matchMedia("(min-width: 769px)").matches;
     }
 
+    function IsDrawerLayout() {
+        if (window.matchMedia === undefined) {
+            return true;
+        }
+
+        return window.matchMedia("(min-width: 1024px)").matches;
+    }
+
+    function InitializeMailboxDrawer() {
+        var toggle = document.getElementById("MailboxDrawerToggle");
+        mailboxDrawerCollapsed = ReadMailboxDrawerPreference();
+
+        if (toggle !== null && !mailboxDrawerInitialized) {
+            toggle.addEventListener("click", function () {
+                SetMailboxDrawerCollapsed(!mailboxDrawerCollapsed, true);
+            });
+            mailboxDrawerInitialized = true;
+        }
+
+        SyncMailboxDrawer();
+    }
+
+    function SyncMailboxDrawer() {
+        var toggle = document.getElementById("MailboxDrawerToggle");
+        var drawer = document.getElementById("MailboxList");
+        var drawerLayout = IsDrawerLayout();
+
+        if (toggle !== null) {
+            toggle.hidden = !drawerLayout;
+        }
+
+        document.body.classList.toggle("mailbox-drawer-available", drawerLayout);
+        SetMailboxDrawerCollapsed(mailboxDrawerCollapsed, false);
+
+        if (drawer !== null && !drawerLayout && !drawer.hidden) {
+            drawer.setAttribute("aria-hidden", "false");
+        }
+    }
+
+    function SetMailboxDrawerCollapsed(isCollapsed, persist) {
+        var toggle = document.getElementById("MailboxDrawerToggle");
+        var drawer = document.getElementById("MailboxList");
+        var drawerLayout = IsDrawerLayout();
+
+        mailboxDrawerCollapsed = isCollapsed;
+        document.body.classList.toggle("mailbox-drawer-collapsed", drawerLayout && isCollapsed);
+
+        if (toggle !== null) {
+            toggle.setAttribute("aria-expanded", drawerLayout && !isCollapsed ? "true" : "false");
+            toggle.setAttribute("aria-label", isCollapsed ? "Show commissioner selection" : "Hide commissioner selection");
+        }
+
+        if (drawer !== null && drawerLayout && !drawer.hidden) {
+            drawer.setAttribute("aria-hidden", isCollapsed ? "true" : "false");
+        }
+
+        if (persist) {
+            SaveMailboxDrawerPreference(isCollapsed);
+        }
+    }
+
+    function ReadMailboxDrawerPreference() {
+        try {
+            return window.localStorage.getItem(mailboxDrawerStorageKey) === "true";
+        }
+        catch (err) {
+            return false;
+        }
+    }
+
+    function SaveMailboxDrawerPreference(isCollapsed) {
+        try {
+            window.localStorage.setItem(mailboxDrawerStorageKey, isCollapsed ? "true" : "false");
+        }
+        catch (err) {
+            // Preference persistence is helpful, but not required for the drawer to work.
+        }
+    }
+
+    function InitializeAdministrativeAccountsModal() {
+        if (administrativeModalInitialized) {
+            return;
+        }
+
+        var openButton = document.getElementById("AdministrativeAccountsButton");
+        var modal = document.getElementById("AdministrativeAccountsModal");
+        if (openButton === null || modal === null) {
+            return;
+        }
+
+        openButton.addEventListener("click", OpenAdministrativeAccountsModal);
+
+        var closeButtons = modal.querySelectorAll("[data-administrative-modal-close]");
+        for (var i = 0; i < closeButtons.length; i++) {
+            closeButtons[i].addEventListener("click", CloseAdministrativeAccountsModal);
+        }
+
+        modal.addEventListener("keydown", HandleAdministrativeAccountsModalKeydown);
+        administrativeModalInitialized = true;
+    }
+
+    function OpenAdministrativeAccountsModal() {
+        var modal = document.getElementById("AdministrativeAccountsModal");
+        if (modal === null) {
+            return;
+        }
+
+        var active = document.activeElement;
+        administrativeModalReturnFocus = active instanceof HTMLElement ? active : null;
+
+        modal.hidden = false;
+        modal.classList.add("is-active");
+        modal.setAttribute("aria-hidden", "false");
+        document.documentElement.classList.add("is-clipped");
+
+        var close = modal.querySelector("button[data-administrative-modal-close]");
+        if (close !== null && typeof close.focus === "function") {
+            close.focus();
+        }
+    }
+
+    function CloseAdministrativeAccountsModal(evt) {
+        if (evt !== undefined && evt !== null) {
+            evt.preventDefault();
+        }
+
+        var modal = document.getElementById("AdministrativeAccountsModal");
+        if (modal === null) {
+            return;
+        }
+
+        modal.classList.remove("is-active");
+        modal.hidden = true;
+        modal.setAttribute("aria-hidden", "true");
+        document.documentElement.classList.remove("is-clipped");
+
+        if (administrativeModalReturnFocus !== null &&
+            typeof administrativeModalReturnFocus.focus === "function") {
+            administrativeModalReturnFocus.focus();
+        }
+
+        administrativeModalReturnFocus = null;
+    }
+
+    function HandleAdministrativeAccountsModalKeydown(evt) {
+        if (evt.key === "Escape") {
+            CloseAdministrativeAccountsModal(evt);
+            return;
+        }
+
+        if (evt.key !== "Tab") {
+            return;
+        }
+
+        var modal = document.getElementById("AdministrativeAccountsModal");
+        if (modal === null || !modal.classList.contains("is-active")) {
+            return;
+        }
+
+        var focusable = modal.querySelectorAll("a[href], button:not([disabled]), [tabindex]:not([tabindex='-1'])");
+        if (focusable.length === 0) {
+            return;
+        }
+
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        var active = document.activeElement;
+
+        if (evt.shiftKey && active === first) {
+            evt.preventDefault();
+            last.focus();
+        }
+        else if (!evt.shiftKey && active === last) {
+            evt.preventDefault();
+            first.focus();
+        }
+    }
+
     function HasMailboxViewChanged(lh, oh) {
         if (oh === null) {
             return true;
@@ -1757,17 +2498,42 @@ var CoMail;
     function GetEmail(emailId) {
         BeginLoading();
         var email = new CoMail.Email();
-        email.Get(emailId)
+        var mailboxName = CoMail.currentHash === null ? "" : CoMail.currentHash.Mailbox;
+        email.Get(emailId, mailboxName)
             .then(function (mail) {
                 try {
-                    CoMail.BuildEmailView(mail);
-                    CoMail.OpenEmailModal();
+                    if (mail === null || mail === undefined) {
+                        if (IsWideArchiveLayout() && CoMail.ShowEmailPreviewStatus !== undefined) {
+                            CoMail.ShowEmailPreviewStatus("Email unavailable", "The selected email could not be loaded.");
+                        }
+
+                        return;
+                    }
+
+                    if (IsWideArchiveLayout()) {
+                        CoMail.BuildEmailPreview(mail);
+                        CoMail.CloseEmailModal();
+                    }
+                    else {
+                        CoMail.BuildEmailView(mail);
+                        CoMail.OpenEmailModal();
+                    }
+
+                    if (CoMail.SelectEmailRow !== undefined) {
+                        CoMail.SelectEmailRow(emailId);
+                    }
+                    else if (CoMail.HighlightSelectedEmail !== undefined) {
+                        CoMail.HighlightSelectedEmail(emailId);
+                    }
                 }
                 finally {
                     EndLoading();
                 }
             }, function () {
                 console.log("error getting Email");
+                if (IsWideArchiveLayout() && CoMail.ShowEmailPreviewStatus !== undefined) {
+                    CoMail.ShowEmailPreviewStatus("Email unavailable", "The selected email could not be loaded.");
+                }
                 EndLoading();
             });
     }
@@ -1775,13 +2541,37 @@ var CoMail;
     function GetEmailList(lh) {
         BeginLoading();
         CoMail.ClearEmailList();
+        if (CoMail.ClearEmailPreview !== undefined && lh.EmailId < 0) {
+            CoMail.ClearEmailPreview();
+        }
 
         var email = new CoMail.Email();
         email.GetList(lh)
             .then(function (allmail) {
                 try {
-                    CoMail.currentEmailList = allmail;
+                    if (!IsCurrentMailboxRequest(lh)) {
+                        return;
+                    }
+
+                    CoMail.currentEmailList = allmail || [];
                     CoMail.BuildEmailList();
+                    if (SelectFirstEmailIfNeeded(lh)) {
+                        return;
+                    }
+
+                    if (CoMail.SelectCurrentEmailRow !== undefined) {
+                        CoMail.SelectCurrentEmailRow();
+                        if (typeof window.requestAnimationFrame === "function") {
+                            window.requestAnimationFrame(function () {
+                                if (CoMail.SelectCurrentEmailRow !== undefined) {
+                                    CoMail.SelectCurrentEmailRow();
+                                }
+                            });
+                        }
+                    }
+                    else if (CoMail.HighlightSelectedEmail !== undefined && CoMail.currentHash !== null) {
+                        CoMail.HighlightSelectedEmail(CoMail.currentHash.EmailId);
+                    }
                 }
                 finally {
                     EndLoading();
@@ -1790,6 +2580,38 @@ var CoMail;
                 console.log("error getting Email List");
                 EndLoading();
             });
+    }
+
+    function IsCurrentMailboxRequest(lh) {
+        return CoMail.currentHash !== null &&
+            CoMail.currentHash.Section === lh.Section &&
+            CoMail.currentHash.Mailbox === lh.Mailbox &&
+            CoMail.currentHash.Page === lh.Page &&
+            CoMail.currentHash.Subject === lh.Subject &&
+            CoMail.currentHash.From === lh.From;
+    }
+
+    function SelectFirstEmailIfNeeded(lh) {
+        var shouldAutoSelect = CoMail.shouldAutoSelectFirstEmail ||
+            (IsWideArchiveLayout() && lh.Mailbox.length > 0 && lh.EmailId < 0);
+
+        if (!IsCurrentMailboxRequest(lh) || !shouldAutoSelect) {
+            return false;
+        }
+
+        CoMail.shouldAutoSelectFirstEmail = false;
+
+        if (lh.EmailId > -1 || CoMail.currentEmailList.length === 0) {
+            return false;
+        }
+
+        var firstEmail = CoMail.currentEmailList[0];
+        if (firstEmail === null || firstEmail === undefined || firstEmail.Id === undefined || firstEmail.Id === null) {
+            return false;
+        }
+
+        location.hash = CoMail.currentHash.AddEmailId(firstEmail.Id);
+        return true;
     }
 
     function GetEmailCount(lh) {
@@ -1819,13 +2641,17 @@ var CoMail;
 
                     if (CoMail.currentHash !== null) {
                         GetEmailList(CoMail.currentHash);
+                        GetEmailCount(CoMail.currentHash);
+                        if (CoMail.currentHash.EmailId === emailId) {
+                            GetEmail(emailId);
+                        }
                     }
                 }
                 finally {
                     EndLoading();
                 }
-            }, function () {
-                console.log("error updating Email Ignore");
+            }, function (error) {
+                console.log("error updating Email Ignore", error && error.Text ? error.Text : error);
                 if (CoMail.ConfigureEmailIgnoreAction !== undefined) {
                     CoMail.ConfigureEmailIgnoreAction({ Id: emailId, Ignore: !ignore }, false);
                 }
@@ -1872,8 +2698,10 @@ var CoMail;
             return;
         }
 
-        a.onclick = null;
-        a.href = location.hash;
+        a.onclick = function () {
+            CoMail.shouldAutoSelectFirstEmail = true;
+        };
+        a.href = "#" + CoMail.currentHash.RemoveEmailId();
 
         if (a.href.indexOf("page=") > -1) {
             a.href = a.href.replace("page=" + CoMail.currentHash.Page, "page=" + page);
@@ -1896,6 +2724,7 @@ var CoMail;
                     }
 
                     CoMail.BuildMailboxes();
+                    SyncMailboxDrawer();
                 }
                 finally {
                     EndLoading();

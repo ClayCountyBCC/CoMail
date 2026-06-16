@@ -4,11 +4,11 @@
   <meta charset="utf-8" />
   <title>Clay County Public Email</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="View email sent and received by officials in Clay County, Florida." />
-  <meta name="site-version" content="v2.7.1.1245" />
+  <meta name="description" content="View public email for officials in Clay County, Florida." />
+  <meta name="site-version" content="v2.7.1.1270" />
   <link rel="icon" href="Content/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css" />
-  <link rel="stylesheet" href="Content/site/theme.css?v2.7.1.1245" />
+  <link rel="stylesheet" href="Content/site/theme.css?v2.7.1.1270" />
 </head>
 <body class="has-navbar-fixed-top site-body">
   <header>
@@ -34,8 +34,24 @@
     </div>
   </div>
 
+  <button
+    id="MailboxDrawerToggle"
+    class="button is-small mailbox-drawer-toggle"
+    type="button"
+    aria-controls="MailboxList"
+    aria-expanded="true"
+    aria-label="Hide commissioner selection"
+    hidden>
+    <span class="icon is-small" aria-hidden="true">
+      <svg class="inline-icon-svg" viewBox="0 0 24 24" focusable="false" role="presentation">
+        <path d="M13 6L7 12L13 18"></path>
+        <path d="M19 6L13 12L19 18"></path>
+      </svg>
+    </span>
+  </button>
+
   <main id="main-content" class="section site-main" tabindex="-1">
-    <div class="container is-max-desktop">
+    <div class="container is-fluid site-container">
       <section id="MailboxList" aria-labelledby="MailboxListHeading" aria-describedby="MailboxListSubtitle" hidden>
         <div class="intro-card content">
           <h1 id="MailboxListHeading" class="title is-2" tabindex="0">Commissioner Email Archives</h1>
@@ -93,96 +109,159 @@
         </section>
 
         <section
-          class="site-panel"
-          id="OtherPublicSection"
-          aria-labelledby="OtherPublicHeading"
-          aria-describedby="OtherPublicDescription">
+          class="site-panel administrative-panel"
+          id="AdministrativeAccountsSection"
+          aria-labelledby="AdministrativeAccountsHeading"
+          aria-describedby="AdministrativeAccountsDescription">
           <div class="mailbox-header">
-            <h2 id="OtherPublicHeading" class="title is-4" tabindex="0">Other Public Mailboxes</h2>
-            <h3 id="OtherPublicDescription" class="subtitle help is-6" tabindex="0">
+            <h2 id="AdministrativeAccountsHeading" class="title is-4" tabindex="0">Other Public Mailboxes</h2>
+            <p id="AdministrativeAccountsDescription" class="subtitle help is-6" tabindex="0">
               Administrative accounts are handled through public records requests.
-            </h3>
+            </p>
           </div>
-          <div
-            class="notification is-info is-light mailbox-note"
-            tabindex="0"
-            role="note"
-            aria-label="The County Manager, Deputy County Manager, and Assistant County Managers' emails can be obtained through a public records request. You can make that request by emailing publicrecords@claycountygov.com.">
-            The County Manager, Deputy County Manager, and Assistant County Managers' emails
-            can be obtained through a public records request. You can make that request by
-            emailing
-            <a href="mailto:publicrecords@claycountygov.com">publicrecords@claycountygov.com</a>.
-          </div>
-          <div id="OtherPublic" class="columns is-multiline is-variable is-4"></div>
+          <button
+            id="AdministrativeAccountsButton"
+            class="card mailbox-card mailbox-card--link mailbox-card--commissioner administrative-card"
+            type="button"
+            aria-haspopup="dialog"
+            aria-controls="AdministrativeAccountsModal">
+            <span class="card-content mailbox-card__content">
+              <span class="mailbox-card__details">
+                <span class="mailbox-card__headline">
+                  <span class="title is-5 mailbox-card__name">Administrative Accounts</span>
+                  <span class="icon is-small mailbox-card__icon" aria-hidden="true">
+                    <svg class="inline-icon-svg" viewBox="0 0 24 24" focusable="false" role="presentation">
+                      <path d="M4 7.5H20"></path>
+                      <path d="M7 7.5V19"></path>
+                      <path d="M17 7.5V19"></path>
+                      <path d="M5.5 19H18.5"></path>
+                      <path d="M12 4L20 7.5H4L12 4Z"></path>
+                    </svg>
+                  </span>
+                </span>
+              </span>
+            </span>
+          </button>
+          <div id="OtherPublic" hidden></div>
         </section>
       </section>
 
       <section id="MailboxView" class="mailbox-archive" aria-labelledby="MailboxName" aria-describedby="MailboxViewDescription" hidden>
         <div class="mailbox-archive__shell site-panel">
-          <div class="mailbox-archive__actions">
-          <div class="mailbox-return">
+          <div class="mailbox-archive__header">
+            <div class="mailbox-return">
               <a id="ReturnToSection" class="button is-text" href="#section=county">
                 Return to County Commissioners
               </a>
             </div>
-            <a
-              id="CloseMailboxView"
-              class="button is-small mailbox-archive__close"
-              href="#section=county"
-              aria-label="Close mailbox archive">
-              <span class="icon is-small" aria-hidden="true">
-                <svg class="inline-icon-svg" viewBox="0 0 24 24" focusable="false" role="presentation">
-                  <path d="M6 6L18 18"></path>
-                  <path d="M18 6L6 18"></path>
-                </svg>
-              </span>
-            </a>
+            <div class="mailbox-archive__title-row">
+              <h1 id="MailboxName" class="title is-3" tabindex="-1"></h1>
+              <a
+                id="CloseMailboxView"
+                class="button is-small mailbox-archive__close"
+                href="#section=county"
+                aria-label="Close mailbox archive">
+                <span class="icon is-small" aria-hidden="true">
+                  <svg class="inline-icon-svg" viewBox="0 0 24 24" focusable="false" role="presentation">
+                    <path d="M6 6L18 18"></path>
+                    <path d="M18 6L6 18"></path>
+                  </svg>
+                </span>
+              </a>
+            </div>
           </div>
 
           <div class="mailbox-archive__content">
-            <div class="level mailbox-header">
-              <div class="level-left">
-                <div>
-                  <p class="eyebrow">Mailbox archive</p>
-                  <h1 id="MailboxName" class="title is-3" tabindex="-1"></h1>
-                  <p id="TotalPageCount" class="help" aria-live="polite" aria-atomic="true"></p>
-                  <p id="MailboxViewDescription" class="is-sr-only">
-                    Use the previous and next buttons to move between email pages. Use the return link to go back to the commissioner list.
-                  </p>
-                </div>
-              </div>
-              <div class="level-right">
-                <nav class="pagination is-small is-rounded" aria-label="Email pages">
-                  <a id="PreviousPage" class="pagination-previous" href="#" aria-label="Go to previous page">
-                    Previous
-                  </a>
-                  <a id="NextPage" class="pagination-next" href="#" aria-label="Go to next page">
-                    Next
-                  </a>
-                </nav>
-              </div>
+            <div class="mailbox-archive__pager-row">
+              <p id="TotalPageCount" class="help" aria-live="polite" aria-atomic="true"></p>
+              <nav class="pagination is-small is-rounded mailbox-pagination" aria-label="Email pages">
+                <a id="PreviousPage" class="pagination-previous" href="#" aria-label="Go to previous page">
+                  Previous
+                </a>
+                <a id="NextPage" class="pagination-next" href="#" aria-label="Go to next page">
+                  Next
+                </a>
+              </nav>
+              <p id="MailboxViewDescription" class="is-sr-only">
+                Use the previous and next buttons to move between email pages. Use the return link to go back to the commissioner list.
+              </p>
             </div>
 
-            <p id="EmailListDescription" class="is-sr-only">
-              Public email list for the selected mailbox. Move through the email rows or use the open action to review the full message. On smaller screens, the from and open columns are hidden.
-            </p>
-            <div class="table-container">
-              <table class="table is-fullwidth is-narrow email-table" aria-describedby="EmailListDescription">
-                <caption class="is-sr-only">Public emails in the selected mailbox</caption>
-                <thead>
-                  <tr>
-                    <th scope="col" class="email-date-header">Date received</th>
-                    <th scope="col" class="email-from-header">From</th>
-                    <th scope="col" class="email-subject-header">Subject</th>
-                    <th scope="col" class="has-text-centered email-action-header">Open</th>
-                  </tr>
-                </thead>
-                <tbody id="EmailList"></tbody>
-              </table>
+            <div class="mailbox-workspace" aria-label="Mailbox email viewer">
+              <section class="mailbox-list-pane" aria-labelledby="MailboxListPaneHeading">
+                <h2 id="MailboxListPaneHeading" class="is-sr-only">Mailbox emails</h2>
+
+                <p id="EmailListDescription" class="is-sr-only">
+                  Public email list for the selected mailbox. Each row shows the email date and sender on the first line, with the subject preview beneath. Move through the email rows to review the full message.
+                </p>
+                <div class="table-container">
+                  <table class="table is-fullwidth is-narrow email-table" aria-describedby="EmailListDescription">
+                    <caption class="is-sr-only">Public emails in the selected mailbox</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col" class="email-date-header">Date</th>
+                        <th scope="col" class="email-from-header">From</th>
+                        <th scope="col" class="email-subject-header">Subject</th>
+                      </tr>
+                    </thead>
+                    <tbody id="EmailList"></tbody>
+                  </table>
+                </div>
+              </section>
+
+              <aside id="EmailPreviewPane" class="email-preview-pane" aria-label="Email preview">
+                <div id="EmailPreviewEmpty" class="email-preview-empty">
+                  <p class="eyebrow">Email preview</p>
+                  <h2 id="EmailPreviewTitle" class="title is-4">Select an email</h2>
+                  <p class="help">No message selected.</p>
+                </div>
+
+                <article id="EmailPreviewContent" class="email-preview-content" hidden>
+                  <header class="email-preview-header">
+                    <div>
+                      <p class="eyebrow">Email Details</p>
+                      <h2 id="PreviewEmailSubject" class="title is-4"></h2>
+                    </div>
+                    <div class="email-action-group">
+                      <button id="EmailPreviewSaveAction" type="button" class="button is-link is-light email-action-button email-action-button--save" hidden disabled>Save Email</button>
+                      <button id="EmailPreviewIgnoreAction" type="button" class="button is-warning email-modal-card__ignore" hidden disabled>Ignore family</button>
+                    </div>
+                  </header>
+
+                  <dl class="email-detail-list email-preview-detail-list">
+                    <div class="email-detail-group email-preview-detail-group--desktop-hidden">
+                      <dt>Date</dt>
+                      <dd id="PreviewEmailDateReceived"></dd>
+                    </div>
+                    <div class="email-detail-group email-preview-detail-group--desktop-hidden">
+                      <dt>From</dt>
+                      <dd id="PreviewEmailFrom"></dd>
+                    </div>
+                    <div class="email-detail-group">
+                      <dt>To</dt>
+                      <dd id="PreviewEmailTo"></dd>
+                    </div>
+                    <div class="email-detail-group">
+                      <dt>Cc</dt>
+                      <dd id="PreviewEmailCc"></dd>
+                    </div>
+                    <div class="email-detail-group email-detail-group--wide">
+                      <dt>Attachments</dt>
+                      <dd id="PreviewEmailAttachments" class="email-attachments"></dd>
+                    </div>
+                  </dl>
+
+                  <section class="email-message-section">
+                    <h3 class="title is-5">Message</h3>
+                    <div id="PreviewEmailMessage" class="content email-message" role="document" aria-label="Email message preview"></div>
+                  </section>
+                </article>
+              </aside>
             </div>
           </div>
         </div>
       </section>
+
     </div>
   </main>
 
@@ -192,7 +271,7 @@
       <header class="modal-card-head">
         <h2 id="EmailModalTitle" class="modal-card-title">Email Details</h2>
         <p id="EmailModalDescription" class="is-sr-only">
-          Review the email details and message content. If available, use the ignore family button to hide or restore the current email family. Use the close button or the Escape key to return to the mailbox list.
+          Review the email details and message content. Use the save email button to open the browser print dialog and save the selected email as a PDF. If available, use the ignore family button to hide or restore the current email family. Use the close button or the Escape key to return to the mailbox list.
         </p>
         <button
           class="delete"
@@ -205,7 +284,7 @@
       <section class="modal-card-body">
         <dl class="email-detail-list">
           <div class="email-detail-group">
-            <dt>Date received</dt>
+            <dt>Date</dt>
             <dd id="EmailDateReceived"></dd>
           </div>
           <div class="email-detail-group">
@@ -236,8 +315,42 @@
         </section>
       </section>
       <footer class="modal-card-foot">
+        <button id="EmailSaveAction" type="button" class="button is-link is-light email-action-button email-action-button--save" hidden disabled>Save Email</button>
         <button id="EmailIgnoreAction" type="button" class="button is-warning email-modal-card__ignore" hidden disabled>Ignore family</button>
         <button type="button" class="button is-link email-modal-card__close" data-email-modal-close>Close</button>
+      </footer>
+    </div>
+  </div>
+
+  <div
+    id="AdministrativeAccountsModal"
+    class="modal administrative-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="AdministrativeAccountsModalTitle"
+    aria-describedby="AdministrativeAccountsModalDescription"
+    aria-hidden="true"
+    hidden>
+    <div class="modal-background" data-administrative-modal-close></div>
+    <div class="modal-card administrative-modal-card">
+      <header class="modal-card-head">
+        <h2 id="AdministrativeAccountsModalTitle" class="modal-card-title">Administrative Accounts</h2>
+        <button
+          class="delete"
+          type="button"
+          aria-label="Close administrative accounts details"
+          data-administrative-modal-close>
+        </button>
+      </header>
+      <section class="modal-card-body">
+        <p id="AdministrativeAccountsModalDescription" class="administrative-modal__message">
+          The County Manager, Deputy County Manager, and Assistant County Managers' emails can be obtained through a public records request.
+          You can make that request by emailing
+          <a href="mailto:publicrecords@claycountygov.com">publicrecords@claycountygov.com</a>.
+        </p>
+      </section>
+      <footer class="modal-card-foot">
+        <button type="button" class="button is-link" data-administrative-modal-close>Close</button>
       </footer>
     </div>
   </div>
@@ -246,7 +359,7 @@
     <span id="SiteVersion" class="site-footer__version">Version unavailable</span>
   </footer>
 
-  <script src="Scripts/SiteState.js?v2.7.1.1245"></script>
+  <script src="Scripts/SiteState.js?v2.7.1.1270"></script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       var request = new XMLHttpRequest();
@@ -278,6 +391,6 @@
       request.send();
     });
   </script>
-  <script src="Scripts/bundle.min.js?v2.7.1.1245"></script>
+  <script src="Scripts/bundle.min.js?v2.7.1.1270"></script>
 </body>
 </html>

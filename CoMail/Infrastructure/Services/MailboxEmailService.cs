@@ -23,7 +23,7 @@ namespace CoMail.Infrastructure
         return new ResponseMessageResult(controller.Request.CreateResponse(HttpStatusCode.NotFound));
       }
 
-      List<Email> emails = GetList(mailboxRecord.Id, page, subject, from);
+      List<Email> emails = GetList(mailboxRecord, page, subject, from);
       if (emails == null)
       {
         return new ResponseMessageResult(controller.Request.CreateResponse(HttpStatusCode.InternalServerError));
@@ -44,7 +44,7 @@ namespace CoMail.Infrastructure
         return new ResponseMessageResult(controller.Request.CreateResponse(HttpStatusCode.NotFound));
       }
 
-      int? count = GetCount(mailboxRecord.Id, subject, from);
+      int? count = GetCount(mailboxRecord, subject, from);
       if (!count.HasValue)
       {
         return new ResponseMessageResult(controller.Request.CreateResponse(HttpStatusCode.InternalServerError));
@@ -54,27 +54,29 @@ namespace CoMail.Infrastructure
     }
 
     private static List<Email> GetList(
-      int personId,
+      PublicMailBox mailboxRecord,
       int page,
       string subject,
       string from)
     {
-      bool usePublicVisibilityRules = !AppSecurity.IsInternalUser();
+      bool usePublicVisibilityRules = mailboxRecord == null ||
+        !AppSecurity.CanViewRestrictedMailbox(mailboxRecord.MailboxName);
 
       return HasFilters(subject, from)
-        ? Email.GetShort(personId, page, subject, from, usePublicVisibilityRules)
-        : Email.GetShort(personId, page, string.Empty, string.Empty, usePublicVisibilityRules);
+        ? Email.GetShort(mailboxRecord.Id, page, subject, from, usePublicVisibilityRules)
+        : Email.GetShort(mailboxRecord.Id, page, string.Empty, string.Empty, usePublicVisibilityRules);
     }
 
     private static int? GetCount(
-      int personId,
+      PublicMailBox mailboxRecord,
       string subject,
       string from)
     {
-      bool usePublicVisibilityRules = !AppSecurity.IsInternalUser();
+      bool usePublicVisibilityRules = mailboxRecord == null ||
+        !AppSecurity.CanViewRestrictedMailbox(mailboxRecord.MailboxName);
       int count = HasFilters(subject, from)
-        ? Email.GetCount(personId, subject, from, usePublicVisibilityRules)
-        : Email.GetCount(personId, string.Empty, string.Empty, usePublicVisibilityRules);
+        ? Email.GetCount(mailboxRecord.Id, subject, from, usePublicVisibilityRules)
+        : Email.GetCount(mailboxRecord.Id, string.Empty, string.Empty, usePublicVisibilityRules);
 
       return count >= 0 ? (int?)count : null;
     }

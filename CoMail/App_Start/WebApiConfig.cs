@@ -13,6 +13,16 @@ namespace CoMail
       config.MapHttpAttributeRoutes();
 
       config.Routes.MapHttpRoute(
+        name: "EmailIgnoreApi",
+        routeTemplate: "api/Email/{id}/Ignore",
+        defaults: new
+        {
+          controller = "Email",
+          action = "Ignore"
+        }
+      );
+
+      config.Routes.MapHttpRoute(
           name: "DefaultApi",
           routeTemplate: "api/{controller}/{id}",
           defaults: new { id = RouteParameter.Optional }

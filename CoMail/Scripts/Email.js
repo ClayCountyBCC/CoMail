@@ -3,8 +3,13 @@ var CoMail;
     function Email() {
     }
 
-    Email.prototype.Get = function (emailId) {
-        var request = XHR.Get("API/Email/" + emailId.toString());
+    Email.prototype.Get = function (emailId, mailboxName) {
+        var url = "API/Email/" + emailId.toString();
+        if (mailboxName !== null && mailboxName !== undefined && mailboxName.length > 0) {
+            url += "?mailbox=" + encodeURIComponent(mailboxName);
+        }
+
+        var request = XHR.Get(url);
 
         return new Promise(function (resolve, reject) {
             request.then(function (response) {
@@ -56,14 +61,19 @@ var CoMail;
     };
 
     Email.prototype.SetIgnoreFamily = function (emailId, ignore) {
-        var request = XHR.Put("API/Email/" + emailId.toString() + "/Ignore?ignore=" + (ignore ? "true" : "false"));
+        var headers = [new XHR.Header("Accept", "application/json")];
+        var request = XHR.Put(
+            "API/Email/" + emailId.toString() + "?ignore=" + (ignore ? "true" : "false"),
+            "",
+            headers,
+            false);
 
         return new Promise(function (resolve, reject) {
             request.then(function (response) {
                 resolve(JSON.parse(response.Text));
-            }).catch(function () {
-                console.log("error in Set Email Ignore");
-                reject(null);
+            }).catch(function (response) {
+                console.log("error in Set Email Ignore", response);
+                reject(response);
             });
         });
     };
