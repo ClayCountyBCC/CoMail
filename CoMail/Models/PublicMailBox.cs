@@ -29,9 +29,29 @@ namespace CoMail.Models
 
     public static List<PublicMailBox> Get()
     {
-      return Database.Query<PublicMailBox>(
+      List<PublicMailBox> mailboxes = Database.Query<PublicMailBox>(
         "dbo.GetPublicMailBoxes",
         commandType: CommandType.StoredProcedure);
+      Normalize(mailboxes);
+      return mailboxes;
+    }
+
+    private static void Normalize(IEnumerable<PublicMailBox> mailboxes)
+    {
+      if (mailboxes == null)
+      {
+        return;
+      }
+
+      foreach (PublicMailBox mailbox in mailboxes)
+      {
+        if (mailbox != null)
+        {
+          mailbox.Title = CoMail.Infrastructure.TextEncodingRepair.Normalize(mailbox.Title);
+          mailbox.Name = CoMail.Infrastructure.TextEncodingRepair.Normalize(mailbox.Name);
+          mailbox.MailboxName = CoMail.Infrastructure.TextEncodingRepair.Normalize(mailbox.MailboxName);
+        }
+      }
     }
   }
 }

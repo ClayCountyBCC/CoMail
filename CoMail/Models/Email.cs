@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using Dapper;
 using CoMail.Infrastructure;
+using Newtonsoft.Json;
 
 namespace CoMail.Models
 {
@@ -14,7 +15,22 @@ namespace CoMail.Models
     private bool _usePublicVisibilityRules = true;
 
     public long Id { get; set; }
-    public int OriginalId { get; set; }
+    public int OriginalArcId { get; set; }
+
+    // Backward-compatibility shim so older proc aliases that still return OriginalId
+    // continue to hydrate the canonical OriginalArcId property until every environment is updated.
+    [JsonIgnore]
+    public int OriginalId
+    {
+      get
+      {
+        return OriginalArcId;
+      }
+      set
+      {
+        OriginalArcId = value;
+      }
+    }
     public string Subject { get; set; }
     public string From { get; set; }
     public string CC { get; set; }
@@ -77,6 +93,7 @@ namespace CoMail.Models
         "dbo.GetEmail",
         parameters,
         commandType: CommandType.StoredProcedure);
+      Normalize(email);
       SetVisibilityRules(email == null ? null : new[] { email }, usePublicVisibilityRules);
       return FilterVisibleEmail(email, usePublicVisibilityRules);
     }
@@ -93,6 +110,7 @@ namespace CoMail.Models
         "dbo.GetEmailList",
         parameters,
         commandType: CommandType.StoredProcedure);
+      Normalize(emails);
       SetVisibilityRules(emails, usePublicVisibilityRules);
       return FilterVisibleEmails(emails, usePublicVisibilityRules);
     }
@@ -116,10 +134,17 @@ namespace CoMail.Models
       parameters.Add("@EmailId", emailId);
       parameters.Add("@Ignore", ignore);
 
-      return Database.ScalarInt(
+      int updated = Database.ScalarInt(
         "dbo.UpdateEmailIgnoreFamily",
         parameters,
         commandType: CommandType.StoredProcedure);
+
+      if (updated > 0 || HasIgnoreValue(emailId, ignore))
+      {
+        return updated > 0 ? updated : 1;
+      }
+
+      return SetIgnoreFamilyFallback(emailId, ignore);
     }
 
     private static DynamicParameters BuildSearchParameters(
@@ -199,6 +224,33 @@ namespace CoMail.Models
       }
     }
 
+    private static void Normalize(Email email)
+    {
+      if (email == null)
+      {
+        return;
+      }
+
+      email.Subject = TextEncodingRepair.Normalize(email.Subject);
+      email.From = TextEncodingRepair.Normalize(email.From);
+      email.CC = TextEncodingRepair.Normalize(email.CC);
+      email.To = TextEncodingRepair.Normalize(email.To);
+      email.Body = TextEncodingRepair.Normalize(email.Body);
+    }
+
+    private static void Normalize(IEnumerable<Email> emails)
+    {
+      if (emails == null)
+      {
+        return;
+      }
+
+      foreach (Email email in emails)
+      {
+        Normalize(email);
+      }
+    }
+
     internal static List<Email> FilterVisibleEmails(IEnumerable<Email> emails, bool usePublicVisibilityRules = true)
     {
       if (emails == null)
@@ -227,6 +279,57 @@ namespace CoMail.Models
       }
 
       return email;
+    }
+
+    private static bool HasIgnoreValue(long emailId, bool ignore)
+    {
+      const string sql = @"
+SELECT COUNT(1)
+FROM dbo.email
+WHERE id = @EmailId
+  AND ISNULL(ignore, 0) = @Ignore;";
+
+      int matchCount = Database.ScalarInt(sql, new
+      {
+        EmailId = emailId,
+        Ignore = ignore
+      });
+
+      return matchCount > 0;
+    }
+
+    private static int SetIgnoreFamilyFallback(long emailId, bool ignore)
+    {
+      const string sql = @"
+DECLARE @OriginalArcId INT;
+SELECT @OriginalArcId = originalArcId
+FROM dbo.email
+WHERE id = @EmailId;
+
+IF @OriginalArcId IS NULL
+BEGIN
+  SELECT 0;
+  RETURN;
+END;
+
+UPDATE dbo.email
+SET ignore = @Ignore
+WHERE originalArcId = @OriginalArcId;
+
+SELECT @@ROWCOUNT;";
+
+      int updated = Database.ScalarInt(sql, new
+      {
+        EmailId = emailId,
+        Ignore = ignore
+      });
+
+      if (updated > 0 || HasIgnoreValue(emailId, ignore))
+      {
+        return updated > 0 ? updated : 1;
+      }
+
+      return updated;
     }
   }
 }

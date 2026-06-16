@@ -26,6 +26,9 @@ namespace CoMail.Models
         commandType: CommandType.StoredProcedure);
 
       state = state ?? new SiteState();
+      state.AppVersion = TextEncodingRepair.Normalize(state.AppVersion);
+      state.MaintenanceMessage = TextEncodingRepair.Normalize(state.MaintenanceMessage);
+      state.UpdatedBy = TextEncodingRepair.Normalize(state.UpdatedBy);
       bool isInternalUser = AppSecurity.IsInternalUser();
 
       state.IsInternalUser = isInternalUser;

@@ -4,12 +4,15 @@ using System.Collections.Generic;
 using System.Security.Principal;
 using System.Threading;
 using System.Web;
+using CoMail.Infrastructure;
+using CoMail.Models;
 
 namespace CoMail.Infrastructure.Security
 {
   public static class AppSecurity
   {
     private const string DeveloperRole = "gMISDeveloper_Group";
+    private const string EmailMaintenanceRole = "gEmailMaintenance_Group";
     private const string RequestCachePrefix = "__CoMail.AppSecurity.";
 
     public static bool IsPublic()
@@ -29,7 +32,7 @@ namespace CoMail.Infrastructure.Security
         return false;
       }
 
-      return IsInRole(DeveloperRole);
+      return HasRestrictedEmailAccessRole();
     }
 
     public static bool CanManageMaintenance()
@@ -39,7 +42,7 @@ namespace CoMail.Infrastructure.Security
         return false;
       }
 
-      return IsInRole(DeveloperRole);
+      return HasRestrictedEmailAccessRole();
     }
 
     public static bool CanManageIgnoredEmails()
@@ -49,14 +52,64 @@ namespace CoMail.Infrastructure.Security
         return false;
       }
 
-      return IsInRole(DeveloperRole);
+      return HasRestrictedEmailAccessRole();
+    }
+
+    public static bool CanViewRestrictedMailbox(string mailboxName)
+    {
+      if (IsPublic())
+      {
+        return false;
+      }
+
+      return HasRestrictedEmailAccessRole() || OwnsMailbox(mailboxName);
+    }
+
+    public static bool CanViewAllRestrictedEmails()
+    {
+      if (IsPublic())
+      {
+        return false;
+      }
+
+      return HasRestrictedEmailAccessRole();
+    }
+
+    public static bool OwnsRestrictedMailbox(string mailboxName)
+    {
+      if (IsPublic())
+      {
+        return false;
+      }
+
+      return OwnsMailbox(mailboxName);
+    }
+
+    public static bool CanViewRestrictedEmail(long emailId, string mailboxName)
+    {
+      if (IsPublic())
+      {
+        return false;
+      }
+
+      if (HasRestrictedEmailAccessRole())
+      {
+        return true;
+      }
+
+      if (!OwnsMailbox(mailboxName))
+      {
+        return false;
+      }
+
+      return EmailBelongsToMailbox(emailId, mailboxName);
     }
 
     public static AppSecurityDiagnostics GetDiagnostics()
     {
       HttpContext context = HttpContext.Current;
       bool isPublic = IsPublic();
-      bool isInternalUser = !isPublic && IsInRole(DeveloperRole);
+      bool isInternalUser = !isPublic && HasRestrictedEmailAccessRole();
 
       AppSecurityDiagnostics diagnostics = new AppSecurityDiagnostics
       {
@@ -109,6 +162,100 @@ namespace CoMail.Infrastructure.Security
 
       diagnostics.LocalCurrentIdentity = BuildPrincipalDiagnostic("WindowsIdentity.GetCurrent()", currentPrincipal, DeveloperRole);
       return diagnostics;
+    }
+
+    private static bool HasRestrictedEmailAccessRole()
+    {
+      return IsInRole(EmailMaintenanceRole) || HasDeveloperRoleAccess();
+    }
+
+    private static bool HasDeveloperRoleAccess()
+    {
+      return IsDeveloperRoleEnabled() && IsInRole(DeveloperRole);
+    }
+
+    private static bool OwnsMailbox(string mailboxName)
+    {
+      string normalizedMailboxName = NormalizeMailboxName(mailboxName);
+      if (string.IsNullOrWhiteSpace(normalizedMailboxName))
+      {
+        return false;
+      }
+
+      HttpContext context = HttpContext.Current;
+      if (context == null)
+      {
+        return false;
+      }
+
+      foreach (string candidate in GetCandidateMailboxAliases(context))
+      {
+        if (string.Equals(candidate, normalizedMailboxName, StringComparison.OrdinalIgnoreCase))
+        {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    private static IEnumerable<string> GetCandidateMailboxAliases(HttpContext context)
+    {
+      HashSet<string> aliases = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+      foreach (IPrincipal principal in GetCandidatePrincipals(context))
+      {
+        string alias = NormalizeMailboxName(principal?.Identity?.Name);
+        if (!string.IsNullOrWhiteSpace(alias) && aliases.Add(alias))
+        {
+          yield return alias;
+        }
+      }
+    }
+
+    private static string NormalizeMailboxName(string value)
+    {
+      if (string.IsNullOrWhiteSpace(value))
+      {
+        return null;
+      }
+
+      string normalized = value.Trim();
+      int slashIndex = normalized.LastIndexOf('\\');
+      if (slashIndex >= 0 && slashIndex < normalized.Length - 1)
+      {
+        normalized = normalized.Substring(slashIndex + 1);
+      }
+
+      int atIndex = normalized.IndexOf('@');
+      if (atIndex > 0)
+      {
+        normalized = normalized.Substring(0, atIndex);
+      }
+
+      return normalized.Trim().ToLowerInvariant();
+    }
+
+    private static bool EmailBelongsToMailbox(long emailId, string mailboxName)
+    {
+      PublicMailBox mailbox = MailboxLookup.Find(mailboxName);
+      if (mailbox == null)
+      {
+        return false;
+      }
+
+      const string sql = @"
+SELECT COUNT(1)
+FROM dbo.emailMailboxLookup
+WHERE emailId = @EmailId
+  AND personId = @PersonId;";
+
+      int matchCount = Database.ScalarInt(sql, new
+      {
+        EmailId = emailId,
+        PersonId = mailbox.Id
+      });
+
+      return matchCount > 0;
     }
 
     private static bool IsInRole(string roleName)
@@ -229,6 +376,14 @@ namespace CoMail.Infrastructure.Security
         return diagnostic;
       }
 
+      if (string.Equals(roleName, DeveloperRole, StringComparison.OrdinalIgnoreCase) &&
+        !IsDeveloperRoleEnabled())
+      {
+        diagnostic.IsInDeveloperRole = false;
+        diagnostic.EvaluationError = "Developer role is disabled outside DEBUG builds.";
+        return diagnostic;
+      }
+
       try
       {
         diagnostic.IsInDeveloperRole = principal.IsInRole(roleName);
@@ -252,6 +407,15 @@ namespace CoMail.Infrastructure.Security
       }
 
       return diagnostic;
+    }
+
+    private static bool IsDeveloperRoleEnabled()
+    {
+#if DEBUG
+      return true;
+#else
+      return false;
+#endif
     }
 
     private static string GetConfiguredSettingValue(string settingName)
