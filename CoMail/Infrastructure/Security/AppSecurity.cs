@@ -11,8 +11,7 @@ namespace CoMail.Infrastructure.Security
 {
   public static class AppSecurity
   {
-    private const string DeveloperRole = "gMISDeveloper_Group";
-    private const string EmailMaintenanceRole = "gEmailMaintenance_Group";
+    private const string RestrictedEmailAccessRole = "gMISDeveloper_Group";
     private const string RequestCachePrefix = "__CoMail.AppSecurity.";
 
     public static bool IsPublic()
@@ -32,27 +31,7 @@ namespace CoMail.Infrastructure.Security
         return false;
       }
 
-      return HasRestrictedEmailAccessRole();
-    }
-
-    public static bool CanManageMaintenance()
-    {
-      if (IsPublic())
-      {
-        return false;
-      }
-
-      return HasRestrictedEmailAccessRole();
-    }
-
-    public static bool CanManageIgnoredEmails()
-    {
-      if (IsPublic())
-      {
-        return false;
-      }
-
-      return HasRestrictedEmailAccessRole();
+      return HasRestrictedEmailVisibilityAccess();
     }
 
     public static bool CanViewRestrictedMailbox(string mailboxName)
@@ -62,27 +41,7 @@ namespace CoMail.Infrastructure.Security
         return false;
       }
 
-      return HasRestrictedEmailAccessRole() || OwnsMailbox(mailboxName);
-    }
-
-    public static bool CanViewAllRestrictedEmails()
-    {
-      if (IsPublic())
-      {
-        return false;
-      }
-
-      return HasRestrictedEmailAccessRole();
-    }
-
-    public static bool OwnsRestrictedMailbox(string mailboxName)
-    {
-      if (IsPublic())
-      {
-        return false;
-      }
-
-      return OwnsMailbox(mailboxName);
+      return HasRestrictedEmailVisibilityAccess() || OwnsMailbox(mailboxName);
     }
 
     public static bool CanViewRestrictedEmail(long emailId, string mailboxName)
@@ -92,7 +51,7 @@ namespace CoMail.Infrastructure.Security
         return false;
       }
 
-      if (HasRestrictedEmailAccessRole())
+      if (HasRestrictedEmailVisibilityAccess())
       {
         return true;
       }
@@ -109,7 +68,7 @@ namespace CoMail.Infrastructure.Security
     {
       HttpContext context = HttpContext.Current;
       bool isPublic = IsPublic();
-      bool isInternalUser = !isPublic && HasRestrictedEmailAccessRole();
+      bool isInternalUser = !isPublic && HasRestrictedEmailVisibilityAccess();
 
       AppSecurityDiagnostics diagnostics = new AppSecurityDiagnostics
       {
@@ -119,13 +78,11 @@ namespace CoMail.Infrastructure.Security
         MachineMatchesPublicIis = MatchesCurrentMachine("PublicIIS"),
         MachineMatchesDmzTestMachine = MatchesCurrentMachine("DMZTestMachineName"),
         IsPublic = isPublic,
-        IsInternalUser = isInternalUser,
-        CanManageMaintenance = isInternalUser && CanManageMaintenance(),
-        CanManageIgnoredEmails = isInternalUser && CanManageIgnoredEmails()
+        IsInternalUser = isInternalUser
       };
 
-      diagnostics.HttpContextUser = BuildPrincipalDiagnostic("HttpContext.User", context?.User, DeveloperRole);
-      diagnostics.ThreadPrincipal = BuildPrincipalDiagnostic("Thread.CurrentPrincipal", Thread.CurrentPrincipal, DeveloperRole);
+      diagnostics.HttpContextUser = BuildPrincipalDiagnostic("HttpContext.User", context?.User, RestrictedEmailAccessRole);
+      diagnostics.ThreadPrincipal = BuildPrincipalDiagnostic("Thread.CurrentPrincipal", Thread.CurrentPrincipal, RestrictedEmailAccessRole);
 
       WindowsPrincipal logonUserPrincipal = null;
       try
@@ -147,7 +104,7 @@ namespace CoMail.Infrastructure.Security
 
       if (diagnostics.RequestLogonUserIdentity == null)
       {
-        diagnostics.RequestLogonUserIdentity = BuildPrincipalDiagnostic("Request.LogonUserIdentity", logonUserPrincipal, DeveloperRole);
+        diagnostics.RequestLogonUserIdentity = BuildPrincipalDiagnostic("Request.LogonUserIdentity", logonUserPrincipal, RestrictedEmailAccessRole);
       }
 
       WindowsPrincipal currentPrincipal = null;
@@ -160,18 +117,13 @@ namespace CoMail.Infrastructure.Security
         }
       }
 
-      diagnostics.LocalCurrentIdentity = BuildPrincipalDiagnostic("WindowsIdentity.GetCurrent()", currentPrincipal, DeveloperRole);
+      diagnostics.LocalCurrentIdentity = BuildPrincipalDiagnostic("WindowsIdentity.GetCurrent()", currentPrincipal, RestrictedEmailAccessRole);
       return diagnostics;
     }
 
-    private static bool HasRestrictedEmailAccessRole()
+    private static bool HasRestrictedEmailVisibilityAccess()
     {
-      return IsInRole(EmailMaintenanceRole) || HasDeveloperRoleAccess();
-    }
-
-    private static bool HasDeveloperRoleAccess()
-    {
-      return IsDeveloperRoleEnabled() && IsInRole(DeveloperRole);
+      return IsInRole(RestrictedEmailAccessRole);
     }
 
     private static bool OwnsMailbox(string mailboxName)
@@ -376,17 +328,10 @@ WHERE emailId = @EmailId
         return diagnostic;
       }
 
-      if (string.Equals(roleName, DeveloperRole, StringComparison.OrdinalIgnoreCase) &&
-        !IsDeveloperRoleEnabled())
-      {
-        diagnostic.IsInDeveloperRole = false;
-        diagnostic.EvaluationError = "Developer role is disabled outside DEBUG builds.";
-        return diagnostic;
-      }
-
       try
       {
-        diagnostic.IsInDeveloperRole = principal.IsInRole(roleName);
+        diagnostic.EvaluatedRoleName = roleName;
+        diagnostic.IsInRestrictedEmailAccessRole = principal.IsInRole(roleName);
         return diagnostic;
       }
       catch (Exception ex)
@@ -398,7 +343,7 @@ WHERE emailId = @EmailId
       {
         try
         {
-          diagnostic.IsInDeveloperRole = IsInWindowsRole(windowsPrincipal, roleName);
+          diagnostic.IsInRestrictedEmailAccessRole = IsInWindowsRole(windowsPrincipal, roleName);
         }
         catch (Exception ex)
         {
@@ -407,15 +352,6 @@ WHERE emailId = @EmailId
       }
 
       return diagnostic;
-    }
-
-    private static bool IsDeveloperRoleEnabled()
-    {
-#if DEBUG
-      return true;
-#else
-      return false;
-#endif
     }
 
     private static string GetConfiguredSettingValue(string settingName)

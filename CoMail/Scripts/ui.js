@@ -176,7 +176,7 @@ var CoMail;
                 continue;
             }
 
-            var attachment = FindAttachmentForCid(src, attachments);
+            var attachment = FindAttachmentForInlineImage(image, attachments);
             if (attachment === null) {
                 ReplaceCidImageWithPlaceholder(image);
                 continue;
@@ -219,6 +219,95 @@ var CoMail;
         }
 
         return null;
+    }
+
+    function FindAttachmentForInlineImage(image, attachments) {
+        var src = image.getAttribute("src") || "";
+        var attachment = FindAttachmentForCid(src, attachments);
+        if (attachment !== null) {
+            return attachment;
+        }
+
+        attachment = FindAttachmentByImageName(image, attachments);
+        if (attachment !== null) {
+            return attachment;
+        }
+
+        var imageAttachments = GetImageAttachments(attachments);
+        return imageAttachments.length === 1 ? imageAttachments[0] : null;
+    }
+
+    function FindAttachmentByImageName(image, attachments) {
+        var imageNames = [
+            image.getAttribute("alt"),
+            image.getAttribute("title"),
+            image.getAttribute("aria-label")
+        ];
+
+        for (var i = 0; i < imageNames.length; i++) {
+            var imageName = NormalizeSearchableName(imageNames[i]);
+            if (imageName.length < 4) {
+                continue;
+            }
+
+            var matches = [];
+            for (var j = 0; j < attachments.length; j++) {
+                var attachment = attachments[j];
+                var attachmentName = NormalizeSearchableName(attachment.Filename);
+                if (attachmentName.length < 4) {
+                    continue;
+                }
+
+                if (attachmentName === imageName ||
+                    attachmentName.indexOf(imageName) > -1 ||
+                    imageName.indexOf(attachmentName) > -1) {
+                    matches.push(attachment);
+                }
+            }
+
+            if (matches.length === 1) {
+                return matches[0];
+            }
+        }
+
+        return null;
+    }
+
+    function GetImageAttachments(attachments) {
+        var imageAttachments = [];
+        for (var i = 0; i < attachments.length; i++) {
+            var attachment = attachments[i];
+            if (IsImageFilename(attachment.Filename)) {
+                imageAttachments.push(attachment);
+            }
+        }
+
+        return imageAttachments;
+    }
+
+    function IsImageFilename(filename) {
+        var value = NormalizeFilename(filename);
+        return HasFileExtension(value, ".png") ||
+            HasFileExtension(value, ".jpg") ||
+            HasFileExtension(value, ".jpeg") ||
+            HasFileExtension(value, ".gif") ||
+            HasFileExtension(value, ".bmp") ||
+            HasFileExtension(value, ".webp");
+    }
+
+    function HasFileExtension(filename, extension) {
+        return filename.length >= extension.length &&
+            filename.substring(filename.length - extension.length) === extension;
+    }
+
+    function NormalizeSearchableName(value) {
+        var filename = NormalizeFilename(value);
+        var dotIndex = filename.lastIndexOf(".");
+        if (dotIndex > 0) {
+            filename = filename.substring(0, dotIndex);
+        }
+
+        return filename.replace(/^outlook[-_ ]*/i, "").replace(/[-_ ]+/g, "-");
     }
 
     function NormalizeCidFilename(src) {
@@ -283,10 +372,17 @@ var CoMail;
 
     function ConfigureInlineImageLink(link, attachment) {
         link.href = BuildAttachmentAccessUrl(attachment.URL);
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
         link.classList.add("email-inline-image-link");
-        link.setAttribute("aria-label", "Open inline image " + attachment.Filename + " in a new window");
+        link.setAttribute("aria-label", "Preview inline image " + attachment.Filename);
+        link.setAttribute("title", "Preview inline image " + attachment.Filename);
+        link.removeAttribute("target");
+        link.removeAttribute("rel");
+        link.addEventListener("click", function (evt) {
+            if (CoMail.OpenInlineImageModal !== undefined) {
+                evt.preventDefault();
+                CoMail.OpenInlineImageModal(attachment, link);
+            }
+        });
     }
 
     function FindAncestorLink(element) {
@@ -632,7 +728,7 @@ var CoMail;
             return;
         }
 
-        var canManage = CoMail.siteState !== null && CoMail.siteState.CanManageIgnoredEmails === true;
+        var canManage = CoMail.siteState !== null && CoMail.siteState.IsInternalUser === true;
         if (!canManage || email === null || email === undefined) {
             button.hidden = true;
             button.disabled = true;

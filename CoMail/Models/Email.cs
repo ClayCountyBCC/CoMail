@@ -263,7 +263,7 @@ namespace CoMail.Models
         return emails.Where(email => email != null).ToList();
       }
 
-      return emails.Where(email => email != null && !email.Ignore).ToList();
+      return emails.Where(email => email != null && IsVisibleToPublic(email)).ToList();
     }
 
     internal static Email FilterVisibleEmail(Email email, bool usePublicVisibilityRules = true)
@@ -273,12 +273,29 @@ namespace CoMail.Models
         return null;
       }
 
-      if (usePublicVisibilityRules && email.Ignore)
+      if (usePublicVisibilityRules && !IsVisibleToPublic(email))
       {
         return null;
       }
 
       return email;
+    }
+
+    // Keep an app-side visibility guard in sync with the stored procedures so
+    // public users never see ignored or still-embargoed emails during partial deployments.
+    private static bool IsVisibleToPublic(Email email)
+    {
+      if (email == null)
+      {
+        return false;
+      }
+
+      return !email.Ignore && email.DateReceived < GetPublicVisibilityCutoffDate();
+    }
+
+    private static DateTime GetPublicVisibilityCutoffDate()
+    {
+      return DateTime.Today.AddDays(-2);
     }
 
     private static bool HasIgnoreValue(long emailId, bool ignore)

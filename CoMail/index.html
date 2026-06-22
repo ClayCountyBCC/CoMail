@@ -5,10 +5,10 @@
   <title>Clay County Public Email</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="View public email for officials in Clay County, Florida." />
-  <meta name="site-version" content="v2.7.1.1270" />
+  <meta name="site-version" content="v2.8.1.1273" />
   <link rel="icon" href="Content/favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css" />
-  <link rel="stylesheet" href="Content/site/theme.css?v2.7.1.1270" />
+  <link rel="stylesheet" href="Content/site/theme.css?v2.8.1.1273" />
 </head>
 <body class="has-navbar-fixed-top site-body">
   <header>
@@ -355,11 +355,56 @@
     </div>
   </div>
 
+  <div
+    id="InlineImageModal"
+    class="modal inline-image-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="InlineImageModalTitle"
+    aria-describedby="InlineImageModalDescription"
+    aria-hidden="true"
+    hidden>
+    <div class="modal-background" data-inline-image-modal-close></div>
+    <div class="modal-card inline-image-modal-card">
+      <header class="modal-card-head">
+        <h2 id="InlineImageModalTitle" class="modal-card-title">Image Preview</h2>
+        <button
+          class="delete"
+          type="button"
+          aria-label="Close image preview"
+          data-inline-image-modal-close
+          data-inline-image-modal-initial-focus>
+        </button>
+      </header>
+      <section class="modal-card-body">
+        <p id="InlineImageModalDescription" class="inline-image-modal__description">
+          Preview the inline image before deciding whether to download it.
+        </p>
+        <figure class="inline-image-modal__figure">
+          <img id="InlineImageModalImage" class="inline-image-modal__image" alt="" />
+          <figcaption id="InlineImageModalCaption" class="inline-image-modal__caption"></figcaption>
+        </figure>
+      </section>
+      <footer class="modal-card-foot">
+        <a
+          id="InlineImageModalDownload"
+          class="button is-link inline-image-modal__download"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          download>
+          Download image
+        </a>
+        <button type="button" class="button is-link is-light" data-inline-image-modal-close>Close</button>
+      </footer>
+    </div>
+  </div>
+
   <footer id="SiteFooter" class="site-footer" aria-label="Published site version">
     <span id="SiteVersion" class="site-footer__version">Version unavailable</span>
   </footer>
 
-  <script src="Scripts/SiteState.js?v2.7.1.1270"></script>
+  <script src="Scripts/SiteState.js?v2.8.1.1273"></script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       var request = new XMLHttpRequest();
@@ -370,10 +415,10 @@
       request.setRequestHeader("Expires", "0");
       request.onload = function () {
         if (request.status >= 200 && request.status < 300 && request.responseText) {
-          try {
-            var siteState = JSON.parse(request.responseText);
-            CoMail.ApplySiteState(siteState);
-            if (siteState && siteState.MaintenanceMode && !siteState.CanManageMaintenance) {
+            try {
+              var siteState = JSON.parse(request.responseText);
+              CoMail.ApplySiteState(siteState);
+            if (siteState && siteState.MaintenanceMode && !siteState.IsInternalUser) {
               window.location.replace("Maintenance.html");
               return;
             }
@@ -391,6 +436,6 @@
       request.send();
     });
   </script>
-  <script src="Scripts/bundle.min.js?v2.7.1.1270"></script>
+  <script src="Scripts/bundle.min.js?v2.8.1.1273"></script>
 </body>
 </html>

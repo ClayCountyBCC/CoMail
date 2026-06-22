@@ -40,7 +40,7 @@ namespace CoMail
             SiteState state = SiteState.Get();
             return state != null &&
                 state.MaintenanceMode &&
-                !state.CanManageMaintenance;
+                !state.IsInternalUser;
         }
 
         private static bool IsRootDocumentRequest()
