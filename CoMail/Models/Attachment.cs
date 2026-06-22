@@ -84,7 +84,7 @@ WHERE e.id = @EmailId
     @UsePublicVisibilityRules = 0
     OR (
       ISNULL(e.ignore, 0) = 0
-      AND e.dateReceived < DATEADD(DAY, -2, GETUTCDATE())
+      AND e.dateReceived < CAST(DATEADD(DAY, -2, GETDATE()) AS date)
     )
   );";
 
@@ -121,7 +121,7 @@ WHERE (
     @UsePublicVisibilityRules = 0
     OR (
       ISNULL(e.ignore, 0) = 0
-      AND e.dateReceived < DATEADD(DAY, -2, GETUTCDATE())
+      AND e.dateReceived < CAST(DATEADD(DAY, -2, GETDATE()) AS date)
     )
   );";
 

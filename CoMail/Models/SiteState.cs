@@ -15,8 +15,6 @@ namespace CoMail.Models
     public DateTime? UpdatedUtc { get; set; }
     public string UpdatedBy { get; set; }
     public bool IsInternalUser { get; set; }
-    public bool CanManageMaintenance { get; set; }
-    public bool CanManageIgnoredEmails { get; set; }
     public AppSecurityDiagnostics SecurityDiagnostics { get; set; }
 
     public static SiteState Get()
@@ -32,8 +30,6 @@ namespace CoMail.Models
       bool isInternalUser = AppSecurity.IsInternalUser();
 
       state.IsInternalUser = isInternalUser;
-      state.CanManageMaintenance = isInternalUser && AppSecurity.CanManageMaintenance();
-      state.CanManageIgnoredEmails = isInternalUser && AppSecurity.CanManageIgnoredEmails();
       state.SecurityDiagnostics = AppSecurity.IsPublic()
         ? null
         : AppSecurity.GetDiagnostics();

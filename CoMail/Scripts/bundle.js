@@ -463,6 +463,9 @@ var CoMail;
     var restoreFocusTo = null;
     var closeRequestHandler = null;
     var initialized = false;
+    var inlineImageModalRoot = null;
+    var inlineImageRestoreFocusTo = null;
+    var inlineImageInitialized = false;
 
     function InitializeEmailModal(onCloseRequest) {
         closeRequestHandler = onCloseRequest;
@@ -482,6 +485,23 @@ var CoMail;
         initialized = true;
     }
 
+    function InitializeInlineImageModal() {
+        inlineImageModalRoot = document.getElementById("InlineImageModal");
+
+        if (inlineImageInitialized || inlineImageModalRoot === null) {
+            return;
+        }
+
+        var closeTargets = inlineImageModalRoot.querySelectorAll("[data-inline-image-modal-close]");
+        for (var i = 0; i < closeTargets.length; i++) {
+            closeTargets[i].addEventListener("click", handleInlineImageCloseRequest);
+        }
+
+        inlineImageModalRoot.addEventListener("keydown", handleInlineImageKeyDown);
+        inlineImageModalRoot.setAttribute("aria-hidden", "true");
+        inlineImageInitialized = true;
+    }
+
     function OpenEmailModal() {
         if (emailModalRoot === null) {
             InitializeEmailModal(closeRequestHandler);
@@ -498,7 +518,7 @@ var CoMail;
 
         emailModalRoot.classList.add("is-active");
         emailModalRoot.setAttribute("aria-hidden", "false");
-        document.documentElement.classList.add("is-clipped");
+        UpdateModalClippingState();
         resetScrollPosition();
         scheduleScrollReset();
 
@@ -524,9 +544,10 @@ var CoMail;
             return;
         }
 
+        CloseInlineImageModal(null, true);
         emailModalRoot.classList.remove("is-active");
         emailModalRoot.setAttribute("aria-hidden", "true");
-        document.documentElement.classList.remove("is-clipped");
+        UpdateModalClippingState();
         resetScrollPosition();
         scheduleScrollReset();
 
@@ -535,6 +556,153 @@ var CoMail;
         }
 
         restoreFocusTo = null;
+    }
+
+    function OpenInlineImageModal(attachment, triggerElement) {
+        if (attachment === null || attachment === undefined) {
+            return;
+        }
+
+        if (inlineImageModalRoot === null) {
+            InitializeInlineImageModal();
+        }
+
+        if (inlineImageModalRoot === null) {
+            return;
+        }
+
+        inlineImageRestoreFocusTo = triggerElement instanceof HTMLElement ? triggerElement : (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+
+        var titleElement = inlineImageModalRoot.querySelector("#InlineImageModalTitle");
+        var descriptionElement = inlineImageModalRoot.querySelector("#InlineImageModalDescription");
+        var imageElement = inlineImageModalRoot.querySelector("#InlineImageModalImage");
+        var captionElement = inlineImageModalRoot.querySelector("#InlineImageModalCaption");
+        var downloadElement = inlineImageModalRoot.querySelector("#InlineImageModalDownload");
+        var imageUrl = resolveAttachmentUrl(attachment);
+        var filename = attachment.Filename || "Inline image";
+
+        if (titleElement !== null) {
+            titleElement.textContent = "Image Preview";
+        }
+
+        if (descriptionElement !== null) {
+            descriptionElement.textContent = "Preview the inline image before deciding whether to download it.";
+        }
+
+        if (imageElement !== null) {
+            imageElement.setAttribute("src", imageUrl);
+            imageElement.setAttribute("alt", filename);
+            imageElement.setAttribute("title", filename);
+            imageElement.setAttribute("loading", "eager");
+            imageElement.setAttribute("decoding", "async");
+        }
+
+        if (captionElement !== null) {
+            captionElement.textContent = filename;
+        }
+
+        if (downloadElement !== null) {
+            downloadElement.setAttribute("href", imageUrl);
+            downloadElement.setAttribute("aria-label", "Download inline image " + filename);
+        }
+
+        inlineImageModalRoot.hidden = false;
+        inlineImageModalRoot.classList.add("is-active");
+        inlineImageModalRoot.setAttribute("aria-hidden", "false");
+        UpdateModalClippingState();
+        resetInlineImageScrollPosition();
+        scheduleInlineImageScrollReset();
+
+        var focusTarget = inlineImageModalRoot.querySelector("[data-inline-image-modal-initial-focus]");
+        if (focusTarget === null) {
+            focusTarget = getFocusableElements(inlineImageModalRoot)[0];
+        }
+
+        if (focusTarget !== undefined && focusTarget !== null && typeof focusTarget.focus === "function") {
+            try {
+                focusTarget.focus({ preventScroll: true });
+            }
+            catch (err) {
+                focusTarget.focus();
+            }
+        }
+    }
+
+    function CloseInlineImageModal(evt, suppressRestoreFocus) {
+        if (evt !== undefined && evt !== null) {
+            evt.preventDefault();
+        }
+
+        if (inlineImageModalRoot === null) {
+            return;
+        }
+
+        inlineImageModalRoot.classList.remove("is-active");
+        inlineImageModalRoot.hidden = true;
+        inlineImageModalRoot.setAttribute("aria-hidden", "true");
+
+        var imageElement = inlineImageModalRoot.querySelector("#InlineImageModalImage");
+        var downloadElement = inlineImageModalRoot.querySelector("#InlineImageModalDownload");
+        if (imageElement !== null) {
+            imageElement.removeAttribute("src");
+            imageElement.removeAttribute("alt");
+            imageElement.removeAttribute("title");
+        }
+
+        if (downloadElement !== null) {
+            downloadElement.removeAttribute("href");
+        }
+
+        UpdateModalClippingState();
+        resetInlineImageScrollPosition();
+        scheduleInlineImageScrollReset();
+
+        if (!suppressRestoreFocus && inlineImageRestoreFocusTo !== null && typeof inlineImageRestoreFocusTo.focus === "function") {
+            inlineImageRestoreFocusTo.focus();
+        }
+
+        inlineImageRestoreFocusTo = null;
+    }
+
+    function handleInlineImageCloseRequest(evt) {
+        evt.preventDefault();
+        CloseInlineImageModal(evt, false);
+    }
+
+    function handleInlineImageKeyDown(evt) {
+        if (inlineImageModalRoot === null || !inlineImageModalRoot.classList.contains("is-active")) {
+            return;
+        }
+
+        if (evt.key === "Escape") {
+            evt.preventDefault();
+            CloseInlineImageModal(evt, false);
+            return;
+        }
+
+        if (evt.key !== "Tab") {
+            return;
+        }
+
+        var focusable = getFocusableElements(inlineImageModalRoot);
+        if (focusable.length === 0) {
+            return;
+        }
+
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        var active = document.activeElement;
+
+        if (evt.shiftKey) {
+            if (active === first) {
+                evt.preventDefault();
+                last.focus();
+            }
+        }
+        else if (active === last) {
+            evt.preventDefault();
+            first.focus();
+        }
     }
 
     function handleCloseRequest(evt) {
@@ -631,9 +799,59 @@ var CoMail;
         setTimeout(resetScrollPosition, 0);
     }
 
+    function resetInlineImageScrollPosition() {
+        if (inlineImageModalRoot === null) {
+            return;
+        }
+
+        inlineImageModalRoot.scrollTop = 0;
+
+        var modalBody = inlineImageModalRoot.querySelector(".modal-card-body");
+        if (modalBody !== null) {
+            modalBody.scrollTop = 0;
+        }
+    }
+
+    function scheduleInlineImageScrollReset() {
+        if (typeof window.requestAnimationFrame === "function") {
+            window.requestAnimationFrame(function () {
+                resetInlineImageScrollPosition();
+            });
+            return;
+        }
+
+        setTimeout(resetInlineImageScrollPosition, 0);
+    }
+
+    function resolveAttachmentUrl(attachment) {
+        if (attachment === null || attachment === undefined) {
+            return "";
+        }
+
+        if (CoMail.BuildAttachmentAccessUrl !== undefined) {
+            return CoMail.BuildAttachmentAccessUrl(attachment.URL || "");
+        }
+
+        return attachment.URL || "";
+    }
+
+    function UpdateModalClippingState() {
+        var emailModalActive = emailModalRoot !== null && emailModalRoot.classList.contains("is-active");
+        var inlineImageModalActive = inlineImageModalRoot !== null && inlineImageModalRoot.classList.contains("is-active");
+        var administrativeModal = document.getElementById("AdministrativeAccountsModal");
+        var administrativeModalActive = administrativeModal !== null && administrativeModal.classList.contains("is-active");
+        var isClipped = emailModalActive || inlineImageModalActive || administrativeModalActive;
+
+        document.documentElement.classList.toggle("is-clipped", isClipped);
+    }
+
     CoMail.InitializeEmailModal = InitializeEmailModal;
+    CoMail.InitializeInlineImageModal = InitializeInlineImageModal;
     CoMail.OpenEmailModal = OpenEmailModal;
     CoMail.CloseEmailModal = CloseEmailModal;
+    CoMail.OpenInlineImageModal = OpenInlineImageModal;
+    CoMail.CloseInlineImageModal = CloseInlineImageModal;
+    CoMail.UpdateModalClippingState = UpdateModalClippingState;
 })(CoMail || (CoMail = {}));
 
 var CoMail;
@@ -814,7 +1032,7 @@ var CoMail;
                 continue;
             }
 
-            var attachment = FindAttachmentForCid(src, attachments);
+            var attachment = FindAttachmentForInlineImage(image, attachments);
             if (attachment === null) {
                 ReplaceCidImageWithPlaceholder(image);
                 continue;
@@ -857,6 +1075,95 @@ var CoMail;
         }
 
         return null;
+    }
+
+    function FindAttachmentForInlineImage(image, attachments) {
+        var src = image.getAttribute("src") || "";
+        var attachment = FindAttachmentForCid(src, attachments);
+        if (attachment !== null) {
+            return attachment;
+        }
+
+        attachment = FindAttachmentByImageName(image, attachments);
+        if (attachment !== null) {
+            return attachment;
+        }
+
+        var imageAttachments = GetImageAttachments(attachments);
+        return imageAttachments.length === 1 ? imageAttachments[0] : null;
+    }
+
+    function FindAttachmentByImageName(image, attachments) {
+        var imageNames = [
+            image.getAttribute("alt"),
+            image.getAttribute("title"),
+            image.getAttribute("aria-label")
+        ];
+
+        for (var i = 0; i < imageNames.length; i++) {
+            var imageName = NormalizeSearchableName(imageNames[i]);
+            if (imageName.length < 4) {
+                continue;
+            }
+
+            var matches = [];
+            for (var j = 0; j < attachments.length; j++) {
+                var attachment = attachments[j];
+                var attachmentName = NormalizeSearchableName(attachment.Filename);
+                if (attachmentName.length < 4) {
+                    continue;
+                }
+
+                if (attachmentName === imageName ||
+                    attachmentName.indexOf(imageName) > -1 ||
+                    imageName.indexOf(attachmentName) > -1) {
+                    matches.push(attachment);
+                }
+            }
+
+            if (matches.length === 1) {
+                return matches[0];
+            }
+        }
+
+        return null;
+    }
+
+    function GetImageAttachments(attachments) {
+        var imageAttachments = [];
+        for (var i = 0; i < attachments.length; i++) {
+            var attachment = attachments[i];
+            if (IsImageFilename(attachment.Filename)) {
+                imageAttachments.push(attachment);
+            }
+        }
+
+        return imageAttachments;
+    }
+
+    function IsImageFilename(filename) {
+        var value = NormalizeFilename(filename);
+        return HasFileExtension(value, ".png") ||
+            HasFileExtension(value, ".jpg") ||
+            HasFileExtension(value, ".jpeg") ||
+            HasFileExtension(value, ".gif") ||
+            HasFileExtension(value, ".bmp") ||
+            HasFileExtension(value, ".webp");
+    }
+
+    function HasFileExtension(filename, extension) {
+        return filename.length >= extension.length &&
+            filename.substring(filename.length - extension.length) === extension;
+    }
+
+    function NormalizeSearchableName(value) {
+        var filename = NormalizeFilename(value);
+        var dotIndex = filename.lastIndexOf(".");
+        if (dotIndex > 0) {
+            filename = filename.substring(0, dotIndex);
+        }
+
+        return filename.replace(/^outlook[-_ ]*/i, "").replace(/[-_ ]+/g, "-");
     }
 
     function NormalizeCidFilename(src) {
@@ -921,10 +1228,17 @@ var CoMail;
 
     function ConfigureInlineImageLink(link, attachment) {
         link.href = BuildAttachmentAccessUrl(attachment.URL);
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
         link.classList.add("email-inline-image-link");
-        link.setAttribute("aria-label", "Open inline image " + attachment.Filename + " in a new window");
+        link.setAttribute("aria-label", "Preview inline image " + attachment.Filename);
+        link.setAttribute("title", "Preview inline image " + attachment.Filename);
+        link.removeAttribute("target");
+        link.removeAttribute("rel");
+        link.addEventListener("click", function (evt) {
+            if (CoMail.OpenInlineImageModal !== undefined) {
+                evt.preventDefault();
+                CoMail.OpenInlineImageModal(attachment, link);
+            }
+        });
     }
 
     function FindAncestorLink(element) {
@@ -1270,7 +1584,7 @@ var CoMail;
             return;
         }
 
-        var canManage = CoMail.siteState !== null && CoMail.siteState.CanManageIgnoredEmails === true;
+        var canManage = CoMail.siteState !== null && CoMail.siteState.IsInternalUser === true;
         if (!canManage || email === null || email === undefined) {
             button.hidden = true;
             button.disabled = true;
@@ -2104,6 +2418,9 @@ var CoMail;
         SetLoadingModalState(false);
         UpdateEmailListDescriptions();
         CoMail.InitializeEmailModal(ModalClosed);
+        if (CoMail.InitializeInlineImageModal !== undefined) {
+            CoMail.InitializeInlineImageModal();
+        }
         InitializeMailboxDrawer();
         InitializeAdministrativeAccountsModal();
         window.onhashchange = HashChange;
@@ -2419,7 +2736,12 @@ var CoMail;
         modal.hidden = false;
         modal.classList.add("is-active");
         modal.setAttribute("aria-hidden", "false");
-        document.documentElement.classList.add("is-clipped");
+        if (CoMail.UpdateModalClippingState !== undefined) {
+            CoMail.UpdateModalClippingState();
+        }
+        else {
+            document.documentElement.classList.add("is-clipped");
+        }
 
         var close = modal.querySelector("button[data-administrative-modal-close]");
         if (close !== null && typeof close.focus === "function") {
@@ -2440,7 +2762,12 @@ var CoMail;
         modal.classList.remove("is-active");
         modal.hidden = true;
         modal.setAttribute("aria-hidden", "true");
-        document.documentElement.classList.remove("is-clipped");
+        if (CoMail.UpdateModalClippingState !== undefined) {
+            CoMail.UpdateModalClippingState();
+        }
+        else {
+            document.documentElement.classList.remove("is-clipped");
+        }
 
         if (administrativeModalReturnFocus !== null &&
             typeof administrativeModalReturnFocus.focus === "function") {

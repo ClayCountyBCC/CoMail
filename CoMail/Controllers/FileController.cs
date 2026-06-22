@@ -13,10 +13,9 @@ namespace CoMail.Controllers
     [AllowAnonymous]
     public Task<HttpResponseMessage> Get(int id, string guid, int attachmentId, long emailId = 0, string mailbox = "")
     {
-      bool canViewAllRestrictedEmails = AppSecurity.CanViewAllRestrictedEmails();
-      bool ownsRestrictedMailbox = AppSecurity.OwnsRestrictedMailbox(mailbox);
-      bool usePublicVisibilityRules = !canViewAllRestrictedEmails && !ownsRestrictedMailbox;
-      string mailboxScope = ownsRestrictedMailbox && !canViewAllRestrictedEmails
+      bool canViewRestrictedMailbox = AppSecurity.CanViewRestrictedMailbox(mailbox);
+      bool usePublicVisibilityRules = !canViewRestrictedMailbox;
+      string mailboxScope = !AppSecurity.IsInternalUser() && canViewRestrictedMailbox
         ? mailbox
         : string.Empty;
 

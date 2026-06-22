@@ -22,6 +22,9 @@ var CoMail;
         SetLoadingModalState(false);
         UpdateEmailListDescriptions();
         CoMail.InitializeEmailModal(ModalClosed);
+        if (CoMail.InitializeInlineImageModal !== undefined) {
+            CoMail.InitializeInlineImageModal();
+        }
         InitializeMailboxDrawer();
         InitializeAdministrativeAccountsModal();
         window.onhashchange = HashChange;
@@ -337,7 +340,12 @@ var CoMail;
         modal.hidden = false;
         modal.classList.add("is-active");
         modal.setAttribute("aria-hidden", "false");
-        document.documentElement.classList.add("is-clipped");
+        if (CoMail.UpdateModalClippingState !== undefined) {
+            CoMail.UpdateModalClippingState();
+        }
+        else {
+            document.documentElement.classList.add("is-clipped");
+        }
 
         var close = modal.querySelector("button[data-administrative-modal-close]");
         if (close !== null && typeof close.focus === "function") {
@@ -358,7 +366,12 @@ var CoMail;
         modal.classList.remove("is-active");
         modal.hidden = true;
         modal.setAttribute("aria-hidden", "true");
-        document.documentElement.classList.remove("is-clipped");
+        if (CoMail.UpdateModalClippingState !== undefined) {
+            CoMail.UpdateModalClippingState();
+        }
+        else {
+            document.documentElement.classList.remove("is-clipped");
+        }
 
         if (administrativeModalReturnFocus !== null &&
             typeof administrativeModalReturnFocus.focus === "function") {

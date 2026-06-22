@@ -40,7 +40,7 @@ namespace CoMail.Controllers
 
     private IHttpActionResult UpdateIgnoreFamily(long id, bool ignore)
     {
-      if (!AppSecurity.CanManageIgnoredEmails())
+      if (!AppSecurity.IsInternalUser())
       {
         return StatusCode(HttpStatusCode.Forbidden);
       }

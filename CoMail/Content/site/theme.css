@@ -848,6 +848,79 @@ a:focus {
   line-height: 1.7;
 }
 
+.inline-image-modal-card {
+  width: min(900px, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  overflow: hidden;
+}
+
+.inline-image-modal-card .modal-card-head {
+  border-bottom: 1px solid var(--site-border);
+  background: linear-gradient(90deg, #f5f8fc 0%, #edf3fa 100%);
+}
+
+.inline-image-modal-card .modal-card-title {
+  color: var(--site-accent-strong);
+  font-weight: 700;
+}
+
+.inline-image-modal-card .modal-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: #ffffff;
+  color: var(--site-text);
+  max-height: min(72vh, 52rem);
+  overflow: auto;
+}
+
+.inline-image-modal-card .modal-card-foot {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  border-top: 1px solid var(--site-border);
+  background: #f5f8fc;
+}
+
+.inline-image-modal__description {
+  margin-bottom: 0;
+  color: var(--site-muted);
+  font-size: 0.96rem;
+  line-height: 1.6;
+}
+
+.inline-image-modal__figure {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.inline-image-modal__image {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: min(58vh, 42rem);
+  margin: 0 auto;
+  border: 1px solid var(--site-border);
+  border-radius: 0.75rem;
+  background: #f7fafc;
+  object-fit: contain;
+}
+
+.inline-image-modal__caption {
+  color: var(--site-muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+  word-break: break-word;
+}
+
+.inline-image-modal__download {
+  min-width: 10.5rem;
+  font-weight: 700;
+}
+
 .email-modal-card .modal-card-head {
   display: flex;
   align-items: center;
@@ -997,6 +1070,13 @@ a:focus {
   max-width: 100%;
   margin: 0.35rem 0.35rem 0.35rem 0;
   vertical-align: top;
+  cursor: zoom-in;
+}
+
+.email-inline-image-link:hover .email-inline-image,
+.email-inline-image-link:focus-visible .email-inline-image {
+  border-color: var(--site-accent);
+  box-shadow: 0 0 0 3px rgba(20, 61, 100, 0.12);
 }
 
 .email-inline-image {
@@ -1008,6 +1088,7 @@ a:focus {
   border-radius: 0.4rem;
   background: #ffffff;
   object-fit: contain;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .email-inline-image-placeholder {

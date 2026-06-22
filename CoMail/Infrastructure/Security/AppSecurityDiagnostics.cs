@@ -9,8 +9,6 @@ namespace CoMail.Infrastructure.Security
     public bool MachineMatchesDmzTestMachine { get; set; }
     public bool IsPublic { get; set; }
     public bool IsInternalUser { get; set; }
-    public bool CanManageMaintenance { get; set; }
-    public bool CanManageIgnoredEmails { get; set; }
     public AppSecurityPrincipalDiagnostic HttpContextUser { get; set; }
     public AppSecurityPrincipalDiagnostic ThreadPrincipal { get; set; }
     public AppSecurityPrincipalDiagnostic RequestLogonUserIdentity { get; set; }
@@ -23,7 +21,8 @@ namespace CoMail.Infrastructure.Security
     public string PrincipalType { get; set; }
     public string IdentityName { get; set; }
     public bool IsAuthenticated { get; set; }
-    public bool? IsInDeveloperRole { get; set; }
+    public string EvaluatedRoleName { get; set; }
+    public bool? IsInRestrictedEmailAccessRole { get; set; }
     public string EvaluationError { get; set; }
   }
 }
